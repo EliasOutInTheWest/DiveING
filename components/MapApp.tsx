@@ -12,12 +12,22 @@ import {
 import DiveMap from '@/components/DiveMap';
 import SidePanel from '@/components/SidePanel';
 import AuthBox from '@/components/AuthBox';
+import AuthProvider, { useAuth } from '@/components/AuthProvider';
 
+// The provider makes "who is logged in" available to everything inside
 export default function MapApp() {
+  return (
+    <AuthProvider>
+      <MapView />
+    </AuthProvider>
+  );
+}
+
+function MapView() {
+  const { isAdmin } = useAuth();
   const [spots, setSpots] = useState<Spot[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [selected, setSelected] = useState<Selection | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -50,7 +60,7 @@ export default function MapApp() {
   return (
     <div className="relative h-full w-full">
       <DiveMap spots={spots} schools={schools} selected={selected} onSelect={setSelected} />
-      <AuthBox onAdminChange={setIsAdmin} />
+      <AuthBox />
       {selected && item && (
         <SidePanel
           key={`${selected.kind}-${selected.id}`}

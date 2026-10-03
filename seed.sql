@@ -1,5 +1,5 @@
 -- Generated from OpenStreetMap data (c) OpenStreetMap contributors, ODbL
--- Bounding box (south,west,north,east): 48.2,-124.5,48.9,-123
+-- Bounding box (south,west,north,east): 48.2,-124.5,48.m9,-123
 
 -- OSM does not tell us the difficulty level, so allow it to be empty
 alter table public.spots alter column level drop not null;
