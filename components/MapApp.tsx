@@ -12,6 +12,7 @@ import {
 import DiveMap from '@/components/DiveMap';
 import SidePanel from '@/components/SidePanel';
 import AuthBox from '@/components/AuthBox';
+import AdminPanel from '@/components/AdminPanel';
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
 
 // The provider makes "who is logged in" available to everything inside
@@ -24,10 +25,11 @@ export default function MapApp() {
 }
 
 function MapView() {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin, isVerified, schoolIds } = useAuth();
   const [spots, setSpots] = useState<Spot[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [selected, setSelected] = useState<Selection | null>(null);
+  const [adminOpen, setAdminOpen] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -57,16 +59,33 @@ function MapView() {
     }
   }
 
+  // Who may edit the selected item?
+  let canEdit = false;
+  let hint = '';
+  if (selected && item) {
+    if (isAdmin) {
+      canEdit = true;
+    } else if (selected.kind === 'spot') {
+      canEdit = isVerified;
+      hint = user ? 'Please confirm your email to edit spots.' : 'Log in to edit this spot.';
+    } else {
+      canEdit = schoolIds.includes(selected.id);
+      hint = 'Only staff of this school (and admins) can edit this page.';
+    }
+  }
+
   return (
     <div className="relative h-full w-full">
       <DiveMap spots={spots} schools={schools} selected={selected} onSelect={setSelected} />
-      <AuthBox />
+      <AuthBox onOpenAdmin={() => setAdminOpen(true)} />
+      {isAdmin && adminOpen && <AdminPanel onClose={() => setAdminOpen(false)} />}
       {selected && item && (
         <SidePanel
           key={`${selected.kind}-${selected.id}`}
           kind={selected.kind}
           item={item}
-          isAdmin={isAdmin}
+          canEdit={canEdit}
+          hint={hint}
           onClose={() => setSelected(null)}
           onSaved={handleSaved}
         />

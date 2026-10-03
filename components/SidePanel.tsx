@@ -53,12 +53,13 @@ function renderValue(f: Field, v: string | number | null) {
 type Props = {
   kind: Kind;
   item: Spot | School;
-  isAdmin: boolean;
+  canEdit: boolean;
+  hint?: string;
   onClose: () => void;
   onSaved: (kind: Kind, updated: Spot | School) => void;
 };
 
-export default function SidePanel({ kind, item, isAdmin, onClose, onSaved }: Props) {
+export default function SidePanel({ kind, item, canEdit, hint, onClose, onSaved }: Props) {
   const fields = FIELDS[kind];
   const record = item as unknown as Record<string, string | number | null>;
 
@@ -115,7 +116,7 @@ export default function SidePanel({ kind, item, isAdmin, onClose, onSaved }: Pro
 
     if (err || !data) {
       console.error('save error:', err?.message);
-      setError('Could not save. Make sure you are logged in as an admin.');
+      setError('Could not save. You may not have permission to edit this.');
       return;
     }
     onSaved(kind, data as unknown as Spot | School);
@@ -212,7 +213,7 @@ export default function SidePanel({ kind, item, isAdmin, onClose, onSaved }: Pro
                 </div>
               </div>
             ))}
-          {isAdmin ? (
+          {canEdit ? (
             <button
               onClick={startEdit}
               className="rounded bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
@@ -220,7 +221,7 @@ export default function SidePanel({ kind, item, isAdmin, onClose, onSaved }: Pro
               Edit
             </button>
           ) : (
-            <p className="text-xs text-gray-400">Only admins can edit for now.</p>
+            hint && <p className="text-xs text-gray-400">{hint}</p>
           )}
         </div>
       )}

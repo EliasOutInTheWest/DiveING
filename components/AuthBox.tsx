@@ -7,7 +7,7 @@ import { useAuth } from '@/components/AuthProvider';
 const inputClass = 'w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900';
 const USERNAME_RE = /^[A-Za-z0-9_-]{3,30}$/;
 
-export default function AuthBox() {
+export default function AuthBox({ onOpenAdmin }: { onOpenAdmin?: () => void }) {
   const { user, username, isAdmin, loading } = useAuth();
 
   const [open, setOpen] = useState(false);
@@ -84,11 +84,19 @@ export default function AuthBox() {
       {user ? (
         <div className="flex items-center gap-2">
           <span className="max-w-40 truncate font-medium">{username ?? user.email}</span>
-          {isAdmin && (
-            <span className="rounded bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-800">
-              Admin
-            </span>
-          )}
+          {isAdmin &&
+            (onOpenAdmin ? (
+              <button
+                onClick={onOpenAdmin}
+                className="rounded bg-sky-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-sky-700"
+              >
+                Admin menu
+              </button>
+            ) : (
+              <span className="rounded bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-800">
+                Admin
+              </span>
+            ))}
           <button
             onClick={() => supabase.auth.signOut()}
             className="rounded border border-gray-300 px-2 py-0.5 hover:bg-gray-50"

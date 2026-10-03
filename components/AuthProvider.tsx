@@ -8,14 +8,25 @@ type AuthState = {
   user: User | null;
   username: string | null;
   isAdmin: boolean;
+  isVerified: boolean; // email confirmed
+  schoolIds: string[]; // schools this user is staff of
   loading: boolean;
 };
 
-const initial: AuthState = { user: null, username: null, isAdmin: false, loading: true };
+const initial: AuthState = {
+  user: null,
+  username: null,
+  isAdmin: false,
+  isVerified: false,
+  schoolIds: [],
+  loading: true,
+};
+
+const loggedOut: AuthState = { ...initial, loading: false };
 
 const AuthContext = createContext<AuthState>(initial);
 
-// Use this in any component: const { user, username, isAdmin } = useAuth();
+// Use this in any component: const { user, username, isAdmin, isVerified, schoolIds } = useAuth();
 export const useAuth = () => useContext(AuthContext);
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
@@ -26,18 +37,21 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
     async function load(user: User | null) {
       if (!user) {
-        if (!cancelled) setState({ user: null, username: null, isAdmin: false, loading: false });
+        if (!cancelled) setState(loggedOut);
         return;
       }
-      const [profileRes, adminRes] = await Promise.all([
+      const [profileRes, adminRes, memberRes] = await Promise.all([
         supabase.from('profiles').select('username').eq('id', user.id).maybeSingle(),
         supabase.rpc('is_admin'),
+        supabase.from('school_members').select('school_id').eq('user_id', user.id),
       ]);
       if (cancelled) return;
       setState({
         user,
         username: profileRes.data?.username ?? null,
         isAdmin: adminRes.data === true,
+        isVerified: !!user.email_confirmed_at,
+        schoolIds: ((memberRes.data as { school_id: string }[] | null) ?? []).map((r) => r.school_id),
         loading: false,
       });
     }
