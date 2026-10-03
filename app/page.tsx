@@ -1,9 +1,9 @@
-import DiveMap from '@/components/DiveMap';
+import MapApp from '@/components/MapApp';
 
 export default function Home() {
   return (
     <main className="h-screen w-screen">
-      <DiveMap />
+      <MapApp />
     </main>
   );
 }
