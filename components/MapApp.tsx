@@ -1,16 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import {
   SCHOOL_COLUMNS,
   SPOT_COLUMNS,
+  type BoatRoute,
+  type LngLat,
+  type Mode,
   type School,
   type Selection,
   type Spot,
 } from '@/lib/types';
 import DiveMap from '@/components/DiveMap';
 import SidePanel from '@/components/SidePanel';
+import CreatePanel from '@/components/CreatePanel';
 import AuthBox from '@/components/AuthBox';
 import AdminPanel from '@/components/AdminPanel';
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
@@ -30,7 +34,11 @@ function MapView() {
   const [schools, setSchools] = useState<School[]>([]);
   const [selected, setSelected] = useState<Selection | null>(null);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [mode, setMode] = useState<Mode>({ type: 'idle' });
+  const [routes, setRoutes] = useState<BoatRoute[]>([]);
+  const [routesVersion, setRoutesVersion] = useState(0);
 
+  // load spots and schools
   useEffect(() => {
     async function load() {
       const [spotsRes, schoolsRes] = await Promise.all([
@@ -45,6 +53,33 @@ function MapView() {
     load();
   }, []);
 
+  // load the boat routes of the selected school / spot
+  useEffect(() => {
+    let cancelled = false;
+    async function loadRoutes() {
+      if (!selected) {
+        setRoutes((prev) => (prev.length ? [] : prev));
+        return;
+      }
+      const args =
+        selected.kind === 'school'
+          ? { p_school: selected.id, p_spot: null }
+          : { p_school: null, p_spot: selected.id };
+      const { data, error } = await supabase.rpc('get_boat_routes', args);
+      if (cancelled) return;
+      if (error) {
+        console.error('routes error:', error.message);
+        setRoutes([]);
+        return;
+      }
+      setRoutes((data as BoatRoute[]) ?? []);
+    }
+    loadRoutes();
+    return () => {
+      cancelled = true;
+    };
+  }, [selected, routesVersion]);
+
   const item = selected
     ? selected.kind === 'spot'
       ? spots.find((s) => s.id === selected.id)
@@ -58,6 +93,27 @@ function MapView() {
       setSchools((prev) => prev.map((s) => (s.id === updated.id ? (updated as School) : s)));
     }
   }
+
+  function handleCreated(kind: 'spot' | 'school', created: Spot | School) {
+    if (kind === 'spot') setSpots((prev) => [...prev, created as Spot]);
+    else setSchools((prev) => [...prev, created as School]);
+    setMode({ type: 'idle' });
+    setSelected({ kind, id: created.id });
+  }
+
+  function startPlace(kind: 'spot' | 'school') {
+    setSelected(null);
+    setMode({ type: 'place', kind, at: null });
+  }
+
+  // clicks on the map while placing a pin / drawing a route
+  const handleMapClick = useCallback((p: LngLat) => {
+    setMode((m) => {
+      if (m.type === 'place') return { ...m, at: p };
+      if (m.type === 'route') return { ...m, waypoints: [...m.waypoints, p] };
+      return m;
+    });
+  }, []);
 
   // Who may edit the selected item?
   let canEdit = false;
@@ -74,20 +130,99 @@ function MapView() {
     }
   }
 
+  const canAddSpot = isAdmin || isVerified;
+
   return (
     <div className="relative h-full w-full">
-      <DiveMap spots={spots} schools={schools} selected={selected} onSelect={setSelected} />
+      <DiveMap
+        spots={spots}
+        schools={schools}
+        selected={selected}
+        routes={routes}
+        mode={mode}
+        onSelect={setSelected}
+        onMapClick={handleMapClick}
+      />
+
+      {/* toolbar: add pins, hints while placing / drawing */}
+      <div className="absolute left-1/2 top-2.5 z-10 flex -translate-x-1/2 items-center gap-2 rounded bg-white p-2 text-sm text-gray-900 shadow">
+        {mode.type === 'idle' && (
+          <>
+            {canAddSpot && (
+              <button
+                onClick={() => startPlace('spot')}
+                className="rounded bg-sky-600 px-3 py-1 font-medium text-white hover:bg-sky-700"
+              >
+                + Add dive spot
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={() => startPlace('school')}
+                className="rounded bg-orange-500 px-3 py-1 font-medium text-white hover:bg-orange-600"
+              >
+                + Add dive school
+              </button>
+            )}
+            {!canAddSpot && <span className="text-gray-500">Log in to add dive spots</span>}
+          </>
+        )}
+        {mode.type === 'place' && (
+          <>
+            <span>
+              {mode.at
+                ? 'Click the map to move the pin'
+                : `Click on the map to place the new ${mode.kind === 'spot' ? 'dive spot' : 'dive school'}`}
+            </span>
+            <button
+              onClick={() => setMode({ type: 'idle' })}
+              className="rounded border border-gray-300 px-2 py-0.5 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </>
+        )}
+        {mode.type === 'route' && (
+          <span>Drawing a boat route: click along the water to add points</span>
+        )}
+      </div>
+
       <AuthBox onOpenAdmin={() => setAdminOpen(true)} />
       {isAdmin && adminOpen && <AdminPanel onClose={() => setAdminOpen(false)} />}
-      {selected && item && (
+
+      {mode.type === 'place' && mode.at && (
+        <CreatePanel
+          key={`new-${mode.kind}`}
+          kind={mode.kind}
+          at={mode.at}
+          isAdmin={isAdmin}
+          onCancel={() => setMode({ type: 'idle' })}
+          onCreated={handleCreated}
+        />
+      )}
+
+      {mode.type !== 'place' && selected && item && (
         <SidePanel
           key={`${selected.kind}-${selected.id}`}
           kind={selected.kind}
           item={item}
           canEdit={canEdit}
           hint={hint}
-          onClose={() => setSelected(null)}
+          spots={spots}
+          schools={schools}
+          routes={routes}
+          mode={mode}
+          setMode={setMode}
+          onClose={() => {
+            setMode({ type: 'idle' });
+            setSelected(null);
+          }}
           onSaved={handleSaved}
+          onRoutesChanged={() => setRoutesVersion((v) => v + 1)}
+          onOpen={(s) => {
+            setMode({ type: 'idle' });
+            setSelected(s);
+          }}
         />
       )}
     </div>

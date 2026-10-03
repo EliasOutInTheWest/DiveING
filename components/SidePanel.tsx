@@ -2,37 +2,20 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { SCHOOL_COLUMNS, SPOT_COLUMNS, type School, type Spot } from '@/lib/types';
+import {
+  SCHOOL_COLUMNS,
+  SPOT_COLUMNS,
+  type BoatRoute,
+  type LngLat,
+  type Mode,
+  type School,
+  type Selection,
+  type Spot,
+} from '@/lib/types';
+import { FIELDS, buildPayload, inputClass, type Field, type Kind } from '@/lib/fields';
+import { lengthKm } from '@/lib/geo';
 
-type Kind = 'spot' | 'school';
-
-type Field = {
-  key: string;
-  label: string;
-  type: 'text' | 'textarea' | 'number' | 'select';
-  options?: string[];
-  required?: boolean;
-};
-
-const FIELDS: Record<Kind, Field[]> = {
-  spot: [
-    { key: 'name', label: 'Name', type: 'text', required: true },
-    { key: 'description', label: 'Description', type: 'textarea' },
-    { key: 'max_depth_m', label: 'Max depth (m)', type: 'number' },
-    { key: 'level', label: 'Level', type: 'select', options: ['beginner', 'intermediate', 'advanced'] },
-    { key: 'best_season', label: 'Best season', type: 'text' },
-  ],
-  school: [
-    { key: 'name', label: 'Name', type: 'text', required: true },
-    { key: 'description', label: 'Description', type: 'textarea' },
-    { key: 'website', label: 'Website', type: 'text' },
-    { key: 'phone', label: 'Phone', type: 'text' },
-    { key: 'email', label: 'Email', type: 'text' },
-  ],
-};
-
-const inputClass =
-  'w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900';
+const BOAT_SPEED_KMH = 25; // used for the duration estimate of a new route
 
 function renderValue(f: Field, v: string | number | null) {
   if (v == null || v === '') return <span className="text-gray-400">—</span>;
@@ -55,19 +38,53 @@ type Props = {
   item: Spot | School;
   canEdit: boolean;
   hint?: string;
+  spots: Spot[];
+  schools: School[];
+  routes: BoatRoute[];
+  mode: Mode;
+  setMode: (m: Mode) => void;
   onClose: () => void;
   onSaved: (kind: Kind, updated: Spot | School) => void;
+  onRoutesChanged: () => void;
+  onOpen: (s: Selection) => void;
 };
 
-export default function SidePanel({ kind, item, canEdit, hint, onClose, onSaved }: Props) {
+export default function SidePanel({
+  kind,
+  item,
+  canEdit,
+  hint,
+  spots,
+  schools,
+  routes,
+  mode,
+  setMode,
+  onClose,
+  onSaved,
+  onRoutesChanged,
+  onOpen,
+}: Props) {
   const fields = FIELDS[kind];
   const record = item as unknown as Record<string, string | number | null>;
 
+  // editing the details
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  // drawing a boat route
+  const [duration, setDuration] = useState<string | null>(null);
+  const [notes, setNotes] = useState('');
+  const [routeError, setRouteError] = useState('');
+
+  const drawing = mode.type === 'route' && kind === 'school' && mode.schoolId === item.id ? mode : null;
+
+  const spotName = (id: string) => spots.find((s) => s.id === id)?.name ?? 'Unknown spot';
+  const schoolName = (id: string) => schools.find((s) => s.id === id)?.name ?? 'Unknown school';
+  const myRoutes = routes.filter((r) => (kind === 'school' ? r.school_id === item.id : r.spot_id === item.id));
+
+  // ----- details -----
   function startEdit() {
     const initial: Record<string, string> = {};
     fields.forEach((f) => {
@@ -79,36 +96,18 @@ export default function SidePanel({ kind, item, canEdit, hint, onClose, onSaved 
   }
 
   async function save() {
-    const payload: Record<string, string | number | null> = {};
-    for (const f of fields) {
-      const raw = (form[f.key] ?? '').trim();
-      if (f.required && !raw) {
-        setError(`${f.label} is required.`);
-        return;
-      }
-      if (f.type === 'number') {
-        if (!raw) {
-          payload[f.key] = null;
-        } else {
-          const n = Number(raw);
-          if (!Number.isInteger(n) || n < 0) {
-            setError(`${f.label} must be a whole number.`);
-            return;
-          }
-          payload[f.key] = n;
-        }
-      } else {
-        payload[f.key] = raw || null;
-      }
+    const built = buildPayload(fields, form);
+    if ('error' in built) {
+      setError(built.error);
+      return;
     }
-
     setSaving(true);
     setError('');
     const table = kind === 'spot' ? 'spots' : 'schools';
     const columns = kind === 'spot' ? SPOT_COLUMNS : SCHOOL_COLUMNS;
     const { data, error: err } = await supabase
       .from(table)
-      .update(payload)
+      .update(built.payload)
       .eq('id', item.id)
       .select(columns)
       .single();
@@ -123,6 +122,63 @@ export default function SidePanel({ kind, item, canEdit, hint, onClose, onSaved 
     setEditing(false);
   }
 
+  // ----- boat routes -----
+  function startRoute() {
+    setDuration(null);
+    setNotes('');
+    setRouteError('');
+    setMode({ type: 'route', schoolId: item.id, spotId: null, waypoints: [] });
+  }
+
+  const spot = drawing?.spotId ? spots.find((s) => s.id === drawing.spotId) : undefined;
+  const start: LngLat = [item.lng, item.lat];
+  const path: LngLat[] = drawing
+    ? [start, ...drawing.waypoints, ...(spot ? [[spot.lng, spot.lat] as LngLat] : [])]
+    : [];
+  const km = lengthKm(path);
+  const estimate = Math.max(1, Math.round((km / BOAT_SPEED_KMH) * 60));
+
+  async function saveRoute() {
+    if (!drawing || !spot) {
+      setRouteError('Choose the destination spot first.');
+      return;
+    }
+    const minutes = duration === null || duration.trim() === '' ? estimate : Number(duration);
+    if (!Number.isInteger(minutes) || minutes < 1) {
+      setRouteError('Duration must be a whole number of minutes.');
+      return;
+    }
+    setSaving(true);
+    setRouteError('');
+    const { error: err } = await supabase.rpc('save_boat_route', {
+      p_school: item.id,
+      p_spot: spot.id,
+      p_geojson: { type: 'LineString', coordinates: path },
+      p_duration: minutes,
+      p_notes: notes.trim() || null,
+    });
+    setSaving(false);
+    if (err) {
+      console.error('route error:', err.message);
+      setRouteError(`Could not save the route. ${err.message}`);
+      return;
+    }
+    setMode({ type: 'idle' });
+    onRoutesChanged();
+  }
+
+  async function deleteRoute(r: BoatRoute) {
+    if (!window.confirm(`Delete the route to ${spotName(r.spot_id)}?`)) return;
+    const { error: err } = await supabase.from('boat_routes').delete().eq('id', r.id);
+    if (err) {
+      setRouteError(err.message);
+      return;
+    }
+    onRoutesChanged();
+  }
+
+  const sortedSpots = [...spots].sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <aside className="absolute left-0 top-0 z-20 h-full w-full overflow-y-auto bg-white p-5 text-gray-900 shadow-xl sm:w-96">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -134,7 +190,9 @@ export default function SidePanel({ kind, item, canEdit, hint, onClose, onSaved 
           >
             {kind === 'spot' ? 'Dive spot' : 'Dive school'}
           </span>
-          {!editing && <h2 className="mt-2 text-xl font-semibold">{item.name}</h2>}
+          {!editing && (
+            <h2 className="mt-2 text-xl font-semibold">{drawing ? `Boat route from ${item.name}` : item.name}</h2>
+          )}
         </div>
         <button
           onClick={onClose}
@@ -145,7 +203,103 @@ export default function SidePanel({ kind, item, canEdit, hint, onClose, onSaved 
         </button>
       </div>
 
-      {editing ? (
+      {drawing ? (
+        // ---------- route builder ----------
+        <div className="space-y-4 text-sm">
+          <p className="text-gray-600">
+            Choose the destination, then click on the map along the water to add points. The route
+            starts at the school and ends at the spot.
+          </p>
+
+          <label className="block">
+            <span className="mb-1 block font-medium text-gray-700">Destination spot</span>
+            <select
+              className={inputClass}
+              value={drawing.spotId ?? ''}
+              onChange={(e) => setMode({ ...drawing, spotId: e.target.value || null })}
+            >
+              <option value="">Choose a spot…</option>
+              {sortedSpots.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="rounded bg-gray-50 p-3">
+            <div>
+              {drawing.waypoints.length} point{drawing.waypoints.length === 1 ? '' : 's'} added ·{' '}
+              {km.toFixed(1)} km
+            </div>
+            {spot && drawing.waypoints.length === 0 && (
+              <div className="mt-1 text-xs text-amber-700">
+                No points yet, so the route is a straight line. Add points to go around land.
+              </div>
+            )}
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={() => setMode({ ...drawing, waypoints: drawing.waypoints.slice(0, -1) })}
+                disabled={drawing.waypoints.length === 0}
+                className="rounded border border-gray-300 px-3 py-1 text-xs hover:bg-white disabled:opacity-50"
+              >
+                Undo last point
+              </button>
+              <button
+                onClick={() => setMode({ ...drawing, waypoints: [] })}
+                disabled={drawing.waypoints.length === 0}
+                className="rounded border border-gray-300 px-3 py-1 text-xs hover:bg-white disabled:opacity-50"
+              >
+                Clear points
+              </button>
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="mb-1 block font-medium text-gray-700">Duration (minutes)</span>
+            <input
+              type="number"
+              min={1}
+              className={inputClass}
+              value={duration ?? String(estimate)}
+              onChange={(e) => setDuration(e.target.value)}
+            />
+            <span className="mt-1 block text-xs text-gray-500">
+              Estimated at {BOAT_SPEED_KMH} km/h. You can change it.
+            </span>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block font-medium text-gray-700">Notes</span>
+            <textarea
+              rows={3}
+              className={inputClass}
+              placeholder="e.g. leaves 8:30, depends on weather"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </label>
+
+          {routeError && <p className="text-sm text-red-600">{routeError}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={saveRoute}
+              disabled={saving}
+              className="rounded bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
+            >
+              {saving ? 'Saving…' : 'Save route'}
+            </button>
+            <button
+              onClick={() => setMode({ type: 'idle' })}
+              disabled={saving}
+              className="rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : editing ? (
+        // ---------- edit details ----------
         <div className="space-y-4">
           {fields.map((f) => (
             <label key={f.key} className="block text-sm">
@@ -200,25 +354,77 @@ export default function SidePanel({ kind, item, canEdit, hint, onClose, onSaved 
           </div>
         </div>
       ) : (
+        // ---------- read ----------
         <div className="space-y-4">
           {fields
             .filter((f) => f.key !== 'name')
             .map((f) => (
               <div key={f.key}>
-                <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                  {f.label}
-                </div>
-                <div className="mt-0.5 whitespace-pre-wrap text-sm">
-                  {renderValue(f, record[f.key])}
-                </div>
+                <div className="text-xs font-medium uppercase tracking-wide text-gray-500">{f.label}</div>
+                <div className="mt-0.5 whitespace-pre-wrap text-sm">{renderValue(f, record[f.key])}</div>
               </div>
             ))}
+
+          {(kind === 'school' || myRoutes.length > 0) && (
+            <div>
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                {kind === 'school' ? 'Boat routes' : 'Reachable by boat from'}
+              </div>
+              <ul className="mt-1 space-y-1.5 text-sm">
+                {myRoutes.length === 0 && <li className="text-gray-400">—</li>}
+                {myRoutes.map((r) => (
+                  <li key={r.id} className="flex items-start justify-between gap-2">
+                    <div>
+                      {kind === 'school' ? (
+                        <button
+                          onClick={() => onOpen({ kind: 'spot', id: r.spot_id })}
+                          className="font-medium text-sky-700 hover:underline"
+                        >
+                          {spotName(r.spot_id)}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => onOpen({ kind: 'school', id: r.school_id })}
+                          className="font-medium text-orange-700 hover:underline"
+                        >
+                          {schoolName(r.school_id)}
+                        </button>
+                      )}
+                      <span className="text-gray-600">
+                        {' '}
+                        · {r.duration_min ? `${r.duration_min} min` : 'duration unknown'}
+                      </span>
+                      {r.notes && <div className="text-xs text-gray-500">{r.notes}</div>}
+                    </div>
+                    {kind === 'school' && canEdit && (
+                      <button
+                        onClick={() => deleteRoute(r)}
+                        className="shrink-0 text-xs text-red-600 hover:underline"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {routeError && <p className="mt-1 text-xs text-red-600">{routeError}</p>}
+              {kind === 'school' && canEdit && (
+                <button
+                  onClick={startRoute}
+                  className="mt-2 rounded border border-sky-600 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50"
+                >
+                  + Add boat route
+                </button>
+              )}
+            </div>
+          )}
+
           {canEdit ? (
             <button
               onClick={startEdit}
               className="rounded bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
             >
-              Edit
+              Edit details
             </button>
           ) : (
             hint && <p className="text-xs text-gray-400">{hint}</p>
