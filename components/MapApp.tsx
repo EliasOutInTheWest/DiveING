@@ -18,6 +18,7 @@ import CreatePanel from '@/components/CreatePanel';
 import AuthBox from '@/components/AuthBox';
 import AdminPanel from '@/components/AdminPanel';
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
+import { DEPTH_LEGEND_GRADIENT, DEPTH_STOPS } from '@/lib/depth';
 
 // The provider makes "who is logged in" available to everything inside
 export default function MapApp() {
@@ -37,6 +38,8 @@ function MapView() {
   const [mode, setMode] = useState<Mode>({ type: 'idle' });
   const [routes, setRoutes] = useState<BoatRoute[]>([]);
   const [routesVersion, setRoutesVersion] = useState(0);
+  const [depthMap, setDepthMap] = useState(false);
+  const [view3d, setView3d] = useState(false);
 
   // load spots and schools
   useEffect(() => {
@@ -140,6 +143,8 @@ function MapView() {
         selected={selected}
         routes={routes}
         mode={mode}
+        depthMap={depthMap}
+        terrain3d={view3d && mode.type === 'idle'}
         onSelect={setSelected}
         onMapClick={handleMapClick}
       />
@@ -185,6 +190,49 @@ function MapView() {
         {mode.type === 'route' && (
           <span>Drawing a boat route: click along the water to add points</span>
         )}
+      </div>
+
+      {/* depth map controls + legend */}
+      <div className="absolute bottom-10 right-2.5 z-10 flex flex-col items-end gap-2">
+        {depthMap && (
+          <div className="w-56 rounded bg-white/95 p-2 text-[11px] leading-snug text-gray-700 shadow">
+            <div className="mb-1 font-medium text-gray-900">Depth (m)</div>
+            <div className="h-2.5 rounded" style={{ background: DEPTH_LEGEND_GRADIENT }} />
+            <div className="mt-0.5 flex justify-between">
+              {DEPTH_STOPS.map((s, i) => (
+                <span key={s.depth}>
+                  {s.depth}
+                  {i === DEPTH_STOPS.length - 1 ? '+' : ''}
+                </span>
+              ))}
+            </div>
+            <p className="mt-1.5 text-gray-600">
+              Rough overview from coarse global data (about 450 m resolution). Not for dive
+              planning or navigation.
+            </p>
+            <p className="text-gray-400">Data: GEBCO / ETOPO1 via Mapzen Terrain Tiles.</p>
+          </div>
+        )}
+        <div className="flex gap-1 rounded bg-white p-1 shadow">
+          <button
+            onClick={() => setDepthMap((v) => !v)}
+            aria-pressed={depthMap}
+            className={`rounded px-2.5 py-1 text-xs font-medium ${
+              depthMap ? 'bg-sky-600 text-white' : 'text-gray-800 hover:bg-gray-100'
+            }`}
+          >
+            Depth
+          </button>
+          <button
+            onClick={() => setView3d((v) => !v)}
+            aria-pressed={view3d}
+            className={`rounded px-2.5 py-1 text-xs font-medium ${
+              view3d ? 'bg-sky-600 text-white' : 'text-gray-800 hover:bg-gray-100'
+            }`}
+          >
+            3D
+          </button>
+        </div>
       </div>
 
       <AuthBox onOpenAdmin={() => setAdminOpen(true)} />

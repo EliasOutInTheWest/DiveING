@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { BoatRoute, LngLat, Mode, School, Selection, Spot } from '@/lib/types';
+import { depthColorExpression } from '@/lib/depth';
 
 // ---------------------------------------------------------------
 // Basemap switch. If the normal map ever stays plain/white,
@@ -32,6 +33,9 @@ const RASTER_STYLE: maplibregl.StyleSpecification = {
 
 const PANEL_WIDTH = 384; // same as Tailwind w-96 used by the side panels
 
+// Elevation + sea floor depth as tiles (coarse global data, about 450 m in the ocean)
+const DEM_TILES = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+
 type DraftFeature = {
   type: 'Feature';
   properties: Record<string, unknown>;
@@ -46,6 +50,8 @@ type Props = {
   selected: Selection | null;
   routes: BoatRoute[];
   mode: Mode;
+  depthMap: boolean;
+  terrain3d: boolean;
   onSelect: (s: Selection | null) => void;
   onMapClick: (p: LngLat) => void;
 };
@@ -56,12 +62,15 @@ export default function DiveMap({
   selected,
   routes,
   mode,
+  depthMap,
+  terrain3d,
   onSelect,
   onMapClick,
 }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [ready, setReady] = useState(false);
+  const was3d = useRef(false);
 
   // Latest values for listeners that live as long as the map
   const modeRef = useRef(mode);
@@ -269,6 +278,68 @@ export default function DiveMap({
     if (!map) return;
     map.getCanvas().style.cursor = mode.type === 'idle' ? '' : 'crosshair';
   }, [mode.type]);
+
+  // 7) Depth map (colours + relief of the sea floor) and 3D view
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    if ((depthMap || terrain3d) && !map.getSource('dem')) {
+      map.addSource('dem', {
+        type: 'raster-dem',
+        tiles: [DEM_TILES],
+        encoding: 'terrarium',
+        tileSize: 256,
+        maxzoom: 12,
+        attribution: 'Terrain: Mapzen, GEBCO, ETOPO1, SRTM',
+      });
+    }
+
+    if (depthMap && !map.getLayer('depth-color')) {
+      // put the layers below the labels of the basemap
+      const firstSymbol = map.getStyle().layers.find((l) => l.type === 'symbol')?.id;
+      map.addLayer(
+        {
+          id: 'depth-color',
+          type: 'color-relief',
+          source: 'dem',
+          paint: {
+            'color-relief-color': depthColorExpression() as never,
+            'color-relief-opacity': 0.8,
+          },
+        },
+        firstSymbol
+      );
+      map.addLayer(
+        {
+          id: 'depth-hillshade',
+          type: 'hillshade',
+          source: 'dem',
+          paint: {
+            'hillshade-exaggeration': 0.35,
+            'hillshade-shadow-color': '#0b2a4a',
+            'hillshade-highlight-color': '#ffffff',
+          },
+        },
+        firstSymbol
+      );
+    }
+    for (const id of ['depth-color', 'depth-hillshade']) {
+      if (map.getLayer(id)) {
+        map.setLayoutProperty(id, 'visibility', depthMap ? 'visible' : 'none');
+      }
+    }
+
+    if (terrain3d) {
+      map.setTerrain({ source: 'dem', exaggeration: 2 });
+      map.easeTo({ pitch: 55 });
+      was3d.current = true;
+    } else if (was3d.current) {
+      map.setTerrain(null);
+      map.easeTo({ pitch: 0 });
+      was3d.current = false;
+    }
+  }, [depthMap, terrain3d, ready]);
 
   return <div ref={container} className="h-full w-full" />;
 }
