@@ -1,7 +1,5 @@
 # 🤿 DiveING
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 **A map for divers.** Find dive spots and dive schools, see how to get there by boat, check the sea floor in 3D, and share photos and reviews with the community.
 
 **Live demo:** https://dive-ing-v1.vercel.app
@@ -12,14 +10,14 @@
 **A map for new divers.** Find dive spots and dive schools, see how to get there by boat, check the sea floor in 3D, and share photos and reviews with the community.
 =======
 **A map for divers.** Find dive spots and dive schools, see how to get there by boat, check the sea floor in 3D, and share photos and reviews with the community.
->>>>>>> 8eab7ee (README, env example and database scripts)
+8eab7ee (README, env example and database scripts)
 
 **Live demo:** https://dive-ing-v1.vercel.app
 
 
 
 > Student project, work in progress. Information on the map is community-provided and for orientation only. It does **not** replace a briefing by a certified dive professional. The depth map uses coarse global data and is **not** suitable for dive planning or navigation.
->>>>>>> 672dbda (README, env example and database scripts)
+672dbda (README, env example and database scripts)
 
 ---
 
@@ -233,8 +231,7 @@ The Vercel *Hobby* plan is free for personal, non-commercial use. On Supabase's 
 
 ## Author
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 Created by Elias Dockal. 
 github.com/EliasOutInTheWest, 
 linkedin.com/in/elias-dockal-b12b7526a/,
