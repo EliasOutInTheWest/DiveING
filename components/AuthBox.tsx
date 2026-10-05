@@ -3,11 +3,14 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { CERT_AGENCIES, CERT_LEVELS } from '@/lib/certs';
 
 const inputClass = 'w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900';
 const USERNAME_RE = /^[A-Za-z0-9_-]{3,30}$/;
 
-export default function AuthBox({ onOpenAdmin }: { onOpenAdmin?: () => void }) {
+type Props = { onOpenAdmin?: () => void; onOpenProfile?: () => void };
+
+export default function AuthBox({ onOpenAdmin, onOpenProfile }: Props) {
   const { user, username, isAdmin, loading } = useAuth();
 
   const [open, setOpen] = useState(false);
@@ -15,6 +18,9 @@ export default function AuthBox({ onOpenAdmin }: { onOpenAdmin?: () => void }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [adult, setAdult] = useState(false);
+  const [certLevel, setCertLevel] = useState('');
+  const [certAgency, setCertAgency] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
@@ -38,6 +44,10 @@ export default function AuthBox({ onOpenAdmin }: { onOpenAdmin?: () => void }) {
         setError('Password must be at least 8 characters.');
         return;
       }
+      if (!adult) {
+        setError('You need to confirm that you are 18 or older.');
+        return;
+      }
     }
 
     setBusy(true);
@@ -59,7 +69,15 @@ export default function AuthBox({ onOpenAdmin }: { onOpenAdmin?: () => void }) {
         const { data, error: err } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { username: name }, emailRedirectTo: window.location.origin },
+          options: {
+            data: {
+              username: name,
+              adult_confirmed: true,
+              cert_level: certLevel || null,
+              cert_agency: certAgency || null,
+            },
+            emailRedirectTo: window.location.origin,
+          },
         });
         if (err) {
           setError(err.message);
@@ -83,7 +101,13 @@ export default function AuthBox({ onOpenAdmin }: { onOpenAdmin?: () => void }) {
     <div className="absolute right-14 top-2.5 z-10 rounded bg-white p-2 text-sm text-gray-900 shadow">
       {user ? (
         <div className="flex items-center gap-2">
-          <span className="max-w-40 truncate font-medium">{username ?? user.email}</span>
+          <button
+            onClick={onOpenProfile}
+            title="My profile"
+            className="max-w-40 truncate font-medium hover:underline"
+          >
+            {username ?? user.email}
+          </button>
           {isAdmin &&
             (onOpenAdmin ? (
               <button
@@ -93,9 +117,7 @@ export default function AuthBox({ onOpenAdmin }: { onOpenAdmin?: () => void }) {
                 Admin menu
               </button>
             ) : (
-              <span className="rounded bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-800">
-                Admin
-              </span>
+              <span className="rounded bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-800">Admin</span>
             ))}
           <button
             onClick={() => supabase.auth.signOut()}
@@ -150,8 +172,38 @@ export default function AuthBox({ onOpenAdmin }: { onOpenAdmin?: () => void }) {
             className={inputClass}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && submit()}
+            onKeyDown={(e) => e.key === 'Enter' && mode === 'login' && submit()}
           />
+
+          {mode === 'signup' && (
+            <>
+              <select className={inputClass} value={certLevel} onChange={(e) => setCertLevel(e.target.value)}>
+                <option value="">Certification (optional)</option>
+                {CERT_LEVELS.map((l) => (
+                  <option key={l.value} value={l.value}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+              <select className={inputClass} value={certAgency} onChange={(e) => setCertAgency(e.target.value)}>
+                <option value="">Agency (optional)</option>
+                {CERT_AGENCIES.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+              <label className="flex items-start gap-2 text-xs text-gray-700">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={adult}
+                  onChange={(e) => setAdult(e.target.checked)}
+                />
+                <span>I confirm that I am 18 years or older.</span>
+              </label>
+            </>
+          )}
 
           {error && <p className="text-xs text-red-600">{error}</p>}
           {info && <p className="text-xs text-green-700">{info}</p>}

@@ -1,10 +1,18 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
-type AuthState = {
+type AuthData = {
   user: User | null;
   username: string | null;
   isAdmin: boolean;
@@ -13,7 +21,9 @@ type AuthState = {
   loading: boolean;
 };
 
-const initial: AuthState = {
+type AuthState = AuthData & { refresh: () => Promise<void> };
+
+const initial: AuthData = {
   user: null,
   username: null,
   isAdmin: false,
@@ -22,52 +32,50 @@ const initial: AuthState = {
   loading: true,
 };
 
-const loggedOut: AuthState = { ...initial, loading: false };
+const AuthContext = createContext<AuthState>({ ...initial, refresh: async () => {} });
 
-const AuthContext = createContext<AuthState>(initial);
-
-// Use this in any component: const { user, username, isAdmin, isVerified, schoolIds } = useAuth();
+// Use this in any component: const { user, username, isAdmin, isVerified, schoolIds, refresh } = useAuth();
 export const useAuth = () => useContext(AuthContext);
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AuthState>(initial);
+  const [state, setState] = useState<AuthData>(initial);
+
+  const load = useCallback(async (user: User | null) => {
+    if (!user) {
+      setState({ ...initial, loading: false });
+      return;
+    }
+    const [profileRes, adminRes, memberRes] = await Promise.all([
+      supabase.from('profiles').select('username').eq('id', user.id).maybeSingle(),
+      supabase.rpc('is_admin'),
+      supabase.from('school_members').select('school_id').eq('user_id', user.id),
+    ]);
+    setState({
+      user,
+      username: profileRes.data?.username ?? null,
+      isAdmin: adminRes.data === true,
+      isVerified: !!user.email_confirmed_at,
+      schoolIds: ((memberRes.data as { school_id: string }[] | null) ?? []).map((r) => r.school_id),
+      loading: false,
+    });
+  }, []);
+
+  // reload username / roles, e.g. after the profile was edited
+  const refresh = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    await load(data.session?.user ?? null);
+  }, [load]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function load(user: User | null) {
-      if (!user) {
-        if (!cancelled) setState(loggedOut);
-        return;
-      }
-      const [profileRes, adminRes, memberRes] = await Promise.all([
-        supabase.from('profiles').select('username').eq('id', user.id).maybeSingle(),
-        supabase.rpc('is_admin'),
-        supabase.from('school_members').select('school_id').eq('user_id', user.id),
-      ]);
-      if (cancelled) return;
-      setState({
-        user,
-        username: profileRes.data?.username ?? null,
-        isAdmin: adminRes.data === true,
-        isVerified: !!user.email_confirmed_at,
-        schoolIds: ((memberRes.data as { school_id: string }[] | null) ?? []).map((r) => r.school_id),
-        loading: false,
-      });
-    }
-
     supabase.auth.getSession().then(({ data }) => load(data.session?.user ?? null));
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       // run outside the auth callback to avoid blocking the auth client
       setTimeout(() => load(session?.user ?? null), 0);
     });
+    return () => sub.subscription.unsubscribe();
+  }, [load]);
 
-    return () => {
-      cancelled = true;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
-
-  return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>;
+  const value = useMemo(() => ({ ...state, refresh }), [state, refresh]);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -17,6 +17,7 @@ import SidePanel from '@/components/SidePanel';
 import CreatePanel from '@/components/CreatePanel';
 import AuthBox from '@/components/AuthBox';
 import AdminPanel from '@/components/AdminPanel';
+import ProfilePanel from '@/components/ProfilePanel';
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
 import { DEPTH_LEGEND_GRADIENT, DEPTH_STOPS } from '@/lib/depth';
 
@@ -35,6 +36,7 @@ function MapView() {
   const [schools, setSchools] = useState<School[]>([]);
   const [selected, setSelected] = useState<Selection | null>(null);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [mode, setMode] = useState<Mode>({ type: 'idle' });
   const [routes, setRoutes] = useState<BoatRoute[]>([]);
   const [routesVersion, setRoutesVersion] = useState(0);
@@ -235,8 +237,9 @@ function MapView() {
         </div>
       </div>
 
-      <AuthBox onOpenAdmin={() => setAdminOpen(true)} />
+      <AuthBox onOpenAdmin={() => setAdminOpen(true)} onOpenProfile={() => setProfileOpen(true)} />
       {isAdmin && adminOpen && <AdminPanel onClose={() => setAdminOpen(false)} />}
+      {user && profileOpen && <ProfilePanel onClose={() => setProfileOpen(false)} />}
 
       {mode.type === 'place' && mode.at && (
         <CreatePanel

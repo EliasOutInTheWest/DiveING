@@ -14,6 +14,7 @@ import {
 } from '@/lib/types';
 import { FIELDS, buildPayload, inputClass, type Field, type Kind } from '@/lib/fields';
 import { lengthKm } from '@/lib/geo';
+import PhotoSection from '@/components/PhotoSection';
 
 const BOAT_SPEED_KMH = 25; // used for the duration estimate of a new route
 
@@ -364,6 +365,8 @@ export default function SidePanel({
                 <div className="mt-0.5 whitespace-pre-wrap text-sm">{renderValue(f, record[f.key])}</div>
               </div>
             ))}
+
+          {kind === 'spot' && <PhotoSection spotId={item.id} />}
 
           {(kind === 'school' || myRoutes.length > 0) && (
             <div>
