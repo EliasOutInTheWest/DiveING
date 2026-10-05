@@ -1,6 +1,7 @@
 # 🤿 DiveING
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 **A map for divers.** Find dive spots and dive schools, see how to get there by boat, check the sea floor in 3D, and share photos and reviews with the community.
 
 **Live demo:** https://dive-ing-v1.vercel.app
@@ -9,12 +10,13 @@
 > Fun Project, work in progress. Information on the map is community-provided and for orientation only. It does **not** replace a briefing by a certified dive professional. The depth map uses coarse global data and is **not** suitable for dive planning or navigation.
 =======
 **A map for new divers.** Find dive spots and dive schools, see how to get there by boat, check the sea floor in 3D, and share photos and reviews with the community.
+=======
+**A map for divers.** Find dive spots and dive schools, see how to get there by boat, check the sea floor in 3D, and share photos and reviews with the community.
+>>>>>>> 8eab7ee (README, env example and database scripts)
 
 **Live demo:** https://dive-ing-v1.vercel.app
 
-<!-- Add a screenshot to the repository (e.g. docs/screenshot-map.png) and remove the comment marks around the next line:
-![DiveING map](docs/screenshot-map.png)
--->
+
 
 > Student project, work in progress. Information on the map is community-provided and for orientation only. It does **not** replace a briefing by a certified dive professional. The depth map uses coarse global data and is **not** suitable for dive planning or navigation.
 >>>>>>> 672dbda (README, env example and database scripts)
@@ -232,6 +234,7 @@ The Vercel *Hobby* plan is free for personal, non-commercial use. On Supabase's 
 ## Author
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 Created by Elias Dockal. 
 github.com/EliasOutInTheWest, 
 linkedin.com/in/elias-dockal-b12b7526a/,
@@ -247,3 +250,13 @@ Created by **YOUR NAME**. Add your links here.
 
 No license has been chosen yet, so all rights are reserved. Add a `LICENSE` file (for example MIT) if you want others to reuse the code.
 >>>>>>> 672dbda (README, env example and database scripts)
+=======
+Created by Elias Dockal
+linkedin.com/in/elias-dockal-b12b7526a/
+https://www.instagram.com/elias_moritz_nsw/
+github.com/EliasOutInTheWest/
+
+## License
+
+No license has been chosen yet, so all rights are reserved. 
+>>>>>>> 8eab7ee (README, env example and database scripts)
