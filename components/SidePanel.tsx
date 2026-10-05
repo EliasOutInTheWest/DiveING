@@ -11,10 +11,14 @@ import {
   type School,
   type Selection,
   type Spot,
+  type RatingInfo,
 } from '@/lib/types';
 import { FIELDS, buildPayload, inputClass, type Field, type Kind } from '@/lib/fields';
 import { lengthKm } from '@/lib/geo';
 import PhotoSection from '@/components/PhotoSection';
+import ReviewsSection from '@/components/ReviewsSection';
+import Stars from '@/components/Stars';
+import { useDirtyFlag } from '@/components/DirtyContext';
 
 const BOAT_SPEED_KMH = 25; // used for the duration estimate of a new route
 
@@ -48,6 +52,8 @@ type Props = {
   onSaved: (kind: Kind, updated: Spot | School) => void;
   onRoutesChanged: () => void;
   onOpen: (s: Selection) => void;
+  rating?: RatingInfo;
+  onReviewsChanged: () => void;
 };
 
 export default function SidePanel({
@@ -64,6 +70,8 @@ export default function SidePanel({
   onSaved,
   onRoutesChanged,
   onOpen,
+  rating,
+  onReviewsChanged,
 }: Props) {
   const fields = FIELDS[kind];
   const record = item as unknown as Record<string, string | number | null>;
@@ -80,6 +88,9 @@ export default function SidePanel({
   const [routeError, setRouteError] = useState('');
 
   const drawing = mode.type === 'route' && kind === 'school' && mode.schoolId === item.id ? mode : null;
+
+  useDirtyFlag('details', editing);
+  useDirtyFlag('route', !!drawing);
 
   const spotName = (id: string) => spots.find((s) => s.id === id)?.name ?? 'Unknown spot';
   const schoolName = (id: string) => schools.find((s) => s.id === id)?.name ?? 'Unknown school';
@@ -193,6 +204,20 @@ export default function SidePanel({
           </span>
           {!editing && (
             <h2 className="mt-2 text-xl font-semibold">{drawing ? `Boat route from ${item.name}` : item.name}</h2>
+          )}
+          {!editing && !drawing && (
+            <div className="mt-1 flex items-center gap-2 text-sm">
+              {rating && rating.count > 0 ? (
+                <>
+                  <Stars value={rating.avg} />
+                  <span className="text-gray-600">
+                    {rating.avg.toFixed(1)} ({rating.count})
+                  </span>
+                </>
+              ) : (
+                <span className="text-gray-400">No reviews yet</span>
+              )}
+            </div>
           )}
         </div>
         <button
@@ -432,6 +457,8 @@ export default function SidePanel({
           ) : (
             hint && <p className="text-xs text-gray-400">{hint}</p>
           )}
+
+          <ReviewsSection kind={kind} targetId={item.id} info={rating} onChanged={onReviewsChanged} />
         </div>
       )}
     </aside>

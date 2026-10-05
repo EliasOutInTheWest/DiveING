@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import {
@@ -8,6 +9,7 @@ import {
   type BoatRoute,
   type LngLat,
   type Mode,
+  type RatingInfo,
   type School,
   type Selection,
   type Spot,
@@ -19,19 +21,23 @@ import AuthBox from '@/components/AuthBox';
 import AdminPanel from '@/components/AdminPanel';
 import ProfilePanel from '@/components/ProfilePanel';
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
+import { DirtyProvider, useDirty } from '@/components/DirtyContext';
 import { DEPTH_LEGEND_GRADIENT, DEPTH_STOPS } from '@/lib/depth';
 
 // The provider makes "who is logged in" available to everything inside
 export default function MapApp() {
   return (
     <AuthProvider>
-      <MapView />
+      <DirtyProvider>
+        <MapView />
+      </DirtyProvider>
     </AuthProvider>
   );
 }
 
 function MapView() {
   const { user, isAdmin, isVerified, schoolIds } = useAuth();
+  const { isDirty } = useDirty();
   const [spots, setSpots] = useState<Spot[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [selected, setSelected] = useState<Selection | null>(null);
@@ -42,6 +48,8 @@ function MapView() {
   const [routesVersion, setRoutesVersion] = useState(0);
   const [depthMap, setDepthMap] = useState(false);
   const [view3d, setView3d] = useState(false);
+  const [ratings, setRatings] = useState<Record<string, RatingInfo>>({});
+  const [ratingsVersion, setRatingsVersion] = useState(0);
 
   // load spots and schools
   useEffect(() => {
@@ -57,6 +65,29 @@ function MapView() {
     }
     load();
   }, []);
+
+  // load the average ratings of all spots and schools
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [spotRes, schoolRes] = await Promise.all([
+        supabase.from('spot_ratings').select('spot_id,avg_rating,review_count'),
+        supabase.from('school_ratings').select('school_id,avg_rating,review_count'),
+      ]);
+      if (cancelled) return;
+      const map: Record<string, RatingInfo> = {};
+      ((spotRes.data as { spot_id: string; avg_rating: number; review_count: number }[] | null) ?? []).forEach((r) => {
+        map[`spot:${r.spot_id}`] = { avg: Number(r.avg_rating), count: Number(r.review_count) };
+      });
+      ((schoolRes.data as { school_id: string; avg_rating: number; review_count: number }[] | null) ?? []).forEach((r) => {
+        map[`school:${r.school_id}`] = { avg: Number(r.avg_rating), count: Number(r.review_count) };
+      });
+      setRatings(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ratingsVersion]);
 
   // load the boat routes of the selected school / spot
   useEffect(() => {
@@ -111,6 +142,13 @@ function MapView() {
     setMode({ type: 'place', kind, at: null });
   }
 
+  // click on the empty map closes the panel (and asks first if there is unsaved input)
+  const handleBackgroundClick = useCallback(() => {
+    if (!selected) return;
+    if (isDirty() && !window.confirm('You have unsaved changes. Close this panel anyway?')) return;
+    setSelected(null);
+  }, [selected, isDirty]);
+
   // clicks on the map while placing a pin / drawing a route
   const handleMapClick = useCallback((p: LngLat) => {
     setMode((m) => {
@@ -149,7 +187,15 @@ function MapView() {
         terrain3d={view3d && mode.type === 'idle'}
         onSelect={setSelected}
         onMapClick={handleMapClick}
+        onBackgroundClick={handleBackgroundClick}
       />
+
+      <Link
+        href="/"
+        className="absolute bottom-6 left-2.5 z-10 rounded bg-white px-3 py-1.5 text-sm font-medium text-sky-800 shadow hover:bg-gray-50"
+      >
+        ← Home
+      </Link>
 
       {/* toolbar: add pins, hints while placing / drawing */}
       <div className="absolute left-1/2 top-2.5 z-10 flex -translate-x-1/2 items-center gap-2 rounded bg-white p-2 text-sm text-gray-900 shadow">
@@ -270,6 +316,8 @@ function MapView() {
           }}
           onSaved={handleSaved}
           onRoutesChanged={() => setRoutesVersion((v) => v + 1)}
+          rating={ratings[`${selected.kind}:${selected.id}`]}
+          onReviewsChanged={() => setRatingsVersion((v) => v + 1)}
           onOpen={(s) => {
             setMode({ type: 'idle' });
             setSelected(s);

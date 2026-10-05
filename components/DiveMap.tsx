@@ -54,6 +54,7 @@ type Props = {
   terrain3d: boolean;
   onSelect: (s: Selection | null) => void;
   onMapClick: (p: LngLat) => void;
+  onBackgroundClick: () => void;
 };
 
 export default function DiveMap({
@@ -66,18 +67,23 @@ export default function DiveMap({
   terrain3d,
   onSelect,
   onMapClick,
+  onBackgroundClick,
 }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [ready, setReady] = useState(false);
   const was3d = useRef(false);
+  const markerEls = useRef(new Map<string, HTMLElement>());
+  const zoomBefore = useRef<number | null>(null);
 
   // Latest values for listeners that live as long as the map
   const modeRef = useRef(mode);
   const clickRef = useRef(onMapClick);
+  const backgroundRef = useRef(onBackgroundClick);
   useEffect(() => {
     modeRef.current = mode;
     clickRef.current = onMapClick;
+    backgroundRef.current = onBackgroundClick;
   });
 
   // 1) Create the map once
@@ -142,6 +148,8 @@ export default function DiveMap({
     map.on('click', (e) => {
       if (modeRef.current.type !== 'idle') {
         clickRef.current([e.lngLat.lng, e.lngLat.lat]);
+      } else {
+        backgroundRef.current(); // click on empty map: close the panel
       }
     });
 
@@ -165,6 +173,8 @@ export default function DiveMap({
       const marker = new maplibregl.Marker({ color }).setLngLat([lng, lat]).addTo(map!);
       const el = marker.getElement();
       el.style.cursor = 'pointer';
+      el.style.transition = 'opacity 200ms';
+      markerEls.current.set(`${kind}:${id}`, el);
       el.addEventListener('click', (e) => {
         if (modeRef.current.type !== 'idle') return; // let the map handle the click
         e.stopPropagation();
@@ -178,13 +188,38 @@ export default function DiveMap({
 
     return () => {
       markers.forEach((m) => m.remove());
+      markerEls.current.clear();
     };
   }, [spots, schools, onSelect]);
 
-  // 3) Move the map when something is selected, so the pin is not hidden behind the panel
+  // 2b) Highlight the selected pin, make all others lighter
+  useEffect(() => {
+    const key = selected ? `${selected.kind}:${selected.id}` : null;
+    markerEls.current.forEach((el, k) => {
+      const isSelected = k === key;
+      el.style.opacity = key && !isSelected ? '0.3' : '1';
+      el.style.zIndex = isSelected ? '5' : '';
+      const svg = el.querySelector('svg');
+      if (svg) {
+        svg.style.transition = 'transform 150ms';
+        svg.style.transformOrigin = '50% 100%';
+        svg.style.transform = isSelected ? 'scale(1.3)' : '';
+      }
+    });
+  }, [selected, spots, schools]);
+
+  // 3) Selecting zooms in a bit, selecting another pin only moves, deselecting zooms back out
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !selected) return;
+    if (!map) return;
+
+    if (!selected) {
+      if (zoomBefore.current !== null) {
+        map.easeTo({ zoom: zoomBefore.current, duration: 700 });
+        zoomBefore.current = null;
+      }
+      return;
+    }
 
     const item =
       selected.kind === 'spot'
@@ -192,10 +227,18 @@ export default function DiveMap({
         : schools.find((s) => s.id === selected.id);
     if (!item) return;
 
+    let zoom = map.getZoom();
+    if (zoomBefore.current === null) {
+      zoomBefore.current = zoom; // remember where we came from
+      zoom = Math.min(Math.max(zoom + 1.5, 9), 14);
+    }
+
     const wide = window.innerWidth >= 640;
     map.easeTo({
       center: [item.lng, item.lat],
+      zoom,
       offset: [wide ? PANEL_WIDTH / 2 : 0, 0],
+      duration: 700,
     });
     // only re-run when the selection changes, not when data is edited
     // eslint-disable-next-line react-hooks/exhaustive-deps

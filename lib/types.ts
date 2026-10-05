@@ -44,3 +44,6 @@ export type Mode =
   | { type: 'idle' }
   | { type: 'place'; kind: 'spot' | 'school'; at: LngLat | null }
   | { type: 'route'; schoolId: string; spotId: string | null; waypoints: LngLat[] };
+
+// Average rating + number of reviews of a spot or school
+export type RatingInfo = { avg: number; count: number };

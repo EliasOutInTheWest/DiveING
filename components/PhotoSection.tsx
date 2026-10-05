@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { resizeImage } from '@/lib/image';
+import { useDirtyFlag } from '@/components/DirtyContext';
 
 const BUCKET = 'spot-photos';
 
@@ -33,6 +34,7 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [open, setOpen] = useState<Photo | null>(null);
+  useDirtyFlag('photo', file !== null);
 
   const load = useCallback(async () => {
     const { data, error: err } = await supabase

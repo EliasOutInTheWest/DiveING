@@ -76,7 +76,7 @@ export default function AuthBox({ onOpenAdmin, onOpenProfile }: Props) {
               cert_level: certLevel || null,
               cert_agency: certAgency || null,
             },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}/map`,
           },
         });
         if (err) {
