@@ -97,6 +97,28 @@ function MapView() {
     };
   }, [uid, likesVersion]);
 
+  // links from the feed: /map?spot=ID selects a spot, /map?favourites=1 shows favourites only
+  const [linkSpot, setLinkSpot] = useState<string | null>(null);
+  const [linkFavourites, setLinkFavourites] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setLinkSpot(params.get('spot'));
+    setLinkFavourites(params.get('favourites') === '1');
+  }, []);
+
+  useEffect(() => {
+    if (!linkSpot || spots.length === 0) return;
+    if (spots.some((s) => s.id === linkSpot)) setSelected({ kind: 'spot', id: linkSpot });
+    setLinkSpot(null);
+  }, [linkSpot, spots]);
+
+  useEffect(() => {
+    if (!linkFavourites || !uid) return;
+    setFilters((f) => ({ ...f, favouritesOnly: true }));
+    setFiltersOpen(true);
+    setLinkFavourites(false);
+  }, [linkFavourites, uid]);
+
   // "favourites only" makes no sense when logged out
   useEffect(() => {
     if (!uid) setFilters((f) => (f.favouritesOnly ? { ...f, favouritesOnly: false } : f));
@@ -271,6 +293,12 @@ function MapView() {
         className="absolute bottom-6 left-2.5 z-10 rounded bg-white px-3 py-1.5 text-sm font-medium text-sky-800 shadow hover:bg-gray-50"
       >
         ← Home
+      </Link>
+      <Link
+        href="/feed"
+        className="absolute bottom-6 left-24 z-10 rounded bg-white px-3 py-1.5 text-sm font-medium text-sky-800 shadow hover:bg-gray-50"
+      >
+        ▶ Feed
       </Link>
 
       {/* toolbar: add pins, hints while placing / drawing */}

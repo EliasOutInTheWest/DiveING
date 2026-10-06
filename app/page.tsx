@@ -46,8 +46,18 @@ const FEATURES = [
   },
   {
     icon: '📷',
-    title: 'Photos',
-    text: 'Look at photos of a spot before you go, and add your own after the dive.',
+    title: 'Photos and videos',
+    text: 'Look at photos and short videos of a spot before you go, and add your own after the dive.',
+  },
+  {
+    icon: '🎬',
+    title: 'Reels-style feed',
+    text: 'Swipe through photos and videos from the community. The feed shows you posts that fit your level and the spots you like.',
+  },
+  {
+    icon: '♥',
+    title: 'Likes and favourites',
+    text: 'Like spots, photos and videos, and find them again in your profile.',
   },
   {
     icon: '🏫',
@@ -88,6 +98,9 @@ export default async function Landing() {
             <a href="#schools" className="hidden text-sky-100 hover:text-white sm:inline">
               For dive schools
             </a>
+            <Link href="/feed" className="text-sky-100 hover:text-white">
+              Feed
+            </Link>
             <Link
               href="/map"
               className="rounded-full bg-white px-4 py-1.5 font-medium text-sky-900 hover:bg-sky-50"
@@ -112,12 +125,12 @@ export default async function Landing() {
             >
               Open the map →
             </Link>
-            <a
-              href="#how"
+            <Link
+              href="/feed"
               className="rounded-full border border-white/60 px-6 py-3 font-semibold text-white hover:bg-white/10"
             >
-              How it works
-            </a>
+              Watch the feed
+            </Link>
           </div>
         </div>
 
@@ -145,7 +158,7 @@ export default async function Landing() {
             </div>
             <div>
               <div className="text-3xl font-bold text-sky-700">{counts.photos}</div>
-              <div className="text-sm text-slate-500">photos</div>
+              <div className="text-sm text-slate-500">photos and videos</div>
             </div>
           </div>
         </section>
@@ -157,7 +170,7 @@ export default async function Landing() {
         <p className="mx-auto mt-3 max-w-xl text-center text-slate-600">
           One place to find where to dive, who to dive with and what others experienced.
         </p>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f) => (
             <div key={f.title} className="rounded-xl border border-slate-200 p-5">
               <div className="text-3xl">{f.icon}</div>

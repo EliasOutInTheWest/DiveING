@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { CERT_AGENCIES, CERT_LEVELS, certLabel } from '@/lib/certs';
 import { countryName } from '@/lib/countries';
-import { photoUrl, thumbPath } from '@/lib/photos';
+import { mediaThumbUrl } from '@/lib/photos';
 
 const USERNAME_RE = /^[A-Za-z0-9_-]{3,30}$/;
 const inputClass = 'w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900';
@@ -27,7 +27,14 @@ type LikedSpot = {
   max_depth_m: number | null;
   country_code: string | null;
 };
-type LikedPhoto = { id: string; storage_path: string; caption: string | null; spot_id: string };
+type LikedPhoto = {
+  id: string;
+  type: string;
+  storage_path: string;
+  poster_path: string | null;
+  caption: string | null;
+  spot_id: string;
+};
 
 const first = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
 
@@ -119,7 +126,7 @@ export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, on
         .order('created_at', { ascending: false }),
       supabase
         .from('media_likes')
-        .select('created_at,media(id,storage_path,caption,spot_id)')
+        .select('created_at,media(id,type,storage_path,poster_path,caption,spot_id)')
         .eq('user_id', uid)
         .order('created_at', { ascending: false }),
     ]);
@@ -251,7 +258,7 @@ export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, on
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="rounded bg-gray-50 p-3">
                 <div className="text-xl font-semibold">{photoCount}</div>
-                <div className="text-xs text-gray-500">Photos</div>
+                <div className="text-xs text-gray-500">Posts</div>
               </div>
               <div className="rounded bg-gray-50 p-3">
                 <div className="text-xl font-semibold">{spotCount}</div>
@@ -313,10 +320,10 @@ export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, on
               </div>
 
               <div>
-                <div className="text-sm font-medium">♥ Liked photos ({likedPhotos.length})</div>
+                <div className="text-sm font-medium">♥ Liked posts ({likedPhotos.length})</div>
                 {likedPhotos.length === 0 ? (
                   <p className="mt-1 text-sm text-gray-400">
-                    No liked photos yet. Open a photo and click the heart.
+                    No liked posts yet. Open a photo or video and click the heart.
                   </p>
                 ) : (
                   <div className="mt-1 grid grid-cols-4 gap-1.5">
@@ -325,15 +332,22 @@ export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, on
                         key={p.id}
                         onClick={() => onOpenSpot(p.spot_id)}
                         title="Open this dive spot"
-                        className="aspect-square overflow-hidden rounded bg-gray-100"
+                        className="relative aspect-square overflow-hidden rounded bg-gray-100"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={photoUrl(thumbPath(p.storage_path))}
-                          alt={p.caption ?? 'Liked photo'}
-                          loading="lazy"
-                          className="h-full w-full object-cover"
-                        />
+                        {mediaThumbUrl(p) ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={mediaThumbUrl(p) ?? ''}
+                            alt={p.caption ?? 'Liked post'}
+                            loading="lazy"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="flex h-full w-full items-center justify-center bg-gray-800 text-white">▶</span>
+                        )}
+                        {p.type === 'video' && (
+                          <span className="absolute right-1 top-1 text-[10px] text-white drop-shadow">▶</span>
+                        )}
                       </button>
                     ))}
                   </div>

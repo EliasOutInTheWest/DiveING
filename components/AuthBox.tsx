@@ -8,9 +8,9 @@ import { CERT_AGENCIES, CERT_LEVELS } from '@/lib/certs';
 const inputClass = 'w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900';
 const USERNAME_RE = /^[A-Za-z0-9_-]{3,30}$/;
 
-type Props = { onOpenAdmin?: () => void; onOpenProfile?: () => void };
+type Props = { onOpenAdmin?: () => void; onOpenProfile?: () => void; className?: string };
 
-export default function AuthBox({ onOpenAdmin, onOpenProfile }: Props) {
+export default function AuthBox({ onOpenAdmin, onOpenProfile, className }: Props) {
   const { user, username, isAdmin, loading } = useAuth();
 
   const [open, setOpen] = useState(false);
@@ -98,7 +98,9 @@ export default function AuthBox({ onOpenAdmin, onOpenProfile }: Props) {
   if (loading) return null;
 
   return (
-    <div className="absolute right-14 top-2.5 z-10 rounded bg-white p-2 text-sm text-gray-900 shadow">
+    <div
+      className={`${className ?? 'absolute right-14 top-2.5 z-10'} rounded bg-white p-2 text-sm text-gray-900 shadow`}
+    >
       {user ? (
         <div className="flex items-center gap-2">
           <button

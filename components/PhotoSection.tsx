@@ -3,14 +3,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
-import { resizeImage } from '@/lib/image';
 import { useDirtyFlag } from '@/components/DirtyContext';
-import { photoUrl as urlOf, thumbPath as thumbOf, PHOTO_BUCKET as BUCKET } from '@/lib/photos';
+import { mediaThumbUrl, mediaUrl, removeMediaFiles, formatDuration } from '@/lib/photos';
+import { ACCEPT_MEDIA, MAX_VIDEO_SECONDS, isVideoFile, uploadMedia } from '@/lib/upload';
 
 type Row = {
   id: string;
   user_id: string;
+  type: string;
   storage_path: string;
+  poster_path: string | null;
+  duration_s: number | null;
   caption: string | null;
   created_at: string;
   profiles: { username: string } | { username: string }[] | null;
@@ -37,9 +40,8 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
   const load = useCallback(async () => {
     const { data, error: err } = await supabase
       .from('media')
-      .select('id,user_id,storage_path,caption,created_at,profiles(username)')
+      .select('id,user_id,type,storage_path,poster_path,duration_s,caption,created_at,profiles(username)')
       .eq('spot_id', spotId)
-      .eq('type', 'image')
       .order('created_at', { ascending: false });
     if (err) {
       console.error('photos error:', err.message);
@@ -51,7 +53,10 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
       rows.map((r) => ({
         id: r.id,
         user_id: r.user_id,
+        type: r.type,
         storage_path: r.storage_path,
+        poster_path: r.poster_path,
+        duration_s: r.duration_s,
         caption: r.caption,
         created_at: r.created_at,
         username: Array.isArray(r.profiles) ? (r.profiles[0]?.username ?? null) : (r.profiles?.username ?? null),
@@ -111,33 +116,7 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
     setUploading(true);
     setError('');
     try {
-      if (file.size > 25 * 1024 * 1024) throw new Error('This file is too large (max. 25 MB).');
-
-      const { full, thumb } = await resizeImage(file);
-      const id = crypto.randomUUID();
-      const path = `${user.id}/${id}.${full.ext}`;
-      const tPath = `${user.id}/${id}_t.${thumb.ext}`;
-      const contentType = full.ext === 'webp' ? 'image/webp' : 'image/jpeg';
-      const options = { contentType, cacheControl: '31536000' };
-
-      const up1 = await supabase.storage.from(BUCKET).upload(path, full.blob, options);
-      if (up1.error) throw new Error(up1.error.message);
-      const up2 = await supabase.storage.from(BUCKET).upload(tPath, thumb.blob, options);
-      if (up2.error) {
-        await supabase.storage.from(BUCKET).remove([path]);
-        throw new Error(up2.error.message);
-      }
-
-      const { error: dbErr } = await supabase.from('media').insert({
-        spot_id: spotId,
-        type: 'image',
-        storage_path: path,
-        caption: caption.trim() || null,
-      });
-      if (dbErr) {
-        await supabase.storage.from(BUCKET).remove([path, tPath]);
-        throw new Error(dbErr.message);
-      }
+      await uploadMedia({ file, spotId, caption, userId: user.id });
 
       setFile(null);
       setCaption('');
@@ -150,25 +129,25 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
   }
 
   async function remove(p: Photo) {
-    if (!window.confirm('Delete this photo?')) return;
+    if (!window.confirm(`Delete this ${p.type === 'video' ? 'video' : 'photo'}?`)) return;
     const { error: dbErr } = await supabase.from('media').delete().eq('id', p.id);
     if (dbErr) {
       setError(dbErr.message);
       return;
     }
-    await supabase.storage.from(BUCKET).remove([p.storage_path, thumbOf(p.storage_path)]);
+    await removeMediaFiles(p);
     setOpen(null);
     await load();
   }
 
   async function report(p: Photo) {
-    const reason = window.prompt('Why are you reporting this photo? (optional)');
+    const reason = window.prompt('Why are you reporting this post? (optional)');
     if (reason === null) return;
     const { error: err } = await supabase
       .from('media_reports')
       .insert({ media_id: p.id, reason: reason.trim() || null });
     if (err) {
-      window.alert(err.code === '23505' ? 'You already reported this photo.' : err.message);
+      window.alert(err.code === '23505' ? 'You already reported this post.' : err.message);
       return;
     }
     window.alert('Thank you. An admin will take a look.');
@@ -176,12 +155,12 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
 
   return (
     <div>
-      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Photos</div>
+      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Photos and videos</div>
 
       {loading ? (
         <p className="mt-1 text-sm text-gray-400">Loading…</p>
       ) : photos.length === 0 ? (
-        <p className="mt-1 text-sm text-gray-400">No photos yet.</p>
+        <p className="mt-1 text-sm text-gray-400">No photos or videos yet.</p>
       ) : (
         <div className="mt-2 grid grid-cols-3 gap-1.5">
           {photos.map((p) => (
@@ -190,13 +169,22 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
               onClick={() => setOpen(p)}
               className="relative aspect-square overflow-hidden rounded bg-gray-100"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={urlOf(thumbOf(p.storage_path))}
-                alt={p.caption ?? 'Dive photo'}
-                loading="lazy"
-                className="h-full w-full object-cover"
-              />
+              {mediaThumbUrl(p) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={mediaThumbUrl(p) ?? ''}
+                  alt={p.caption ?? 'Dive photo'}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center bg-gray-800 text-white">▶</span>
+              )}
+              {p.type === 'video' && (
+                <span className="absolute right-1 top-0.5 text-[11px] font-medium text-white drop-shadow">
+                  ▶ {formatDuration(p.duration_s)}
+                </span>
+              )}
               {(counts[p.id] ?? 0) > 0 && (
                 <span className="absolute bottom-0.5 left-1 text-[11px] font-medium text-white drop-shadow">
                   ♥ {counts[p.id]}
@@ -220,8 +208,9 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
               onChange={(e) => setCaption(e.target.value)}
             />
             <p className="text-xs text-gray-500">
-              Only upload photos you took yourself. The photo is shrunk in your browser and hidden
-              data such as the GPS position is removed.
+              {isVideoFile(file)
+                ? `Only upload videos you made yourself (max. ${MAX_VIDEO_SECONDS} seconds, 50 MB). Videos are uploaded as they are, so check that they do not show a location you want to keep private.`
+                : 'Only upload photos you took yourself. The photo is shrunk in your browser and hidden data such as the GPS position is removed.'}
             </p>
             <div className="flex gap-2">
               <button
@@ -229,7 +218,7 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
                 disabled={uploading}
                 className="rounded bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
               >
-                {uploading ? 'Uploading…' : 'Upload'}
+                {uploading ? (isVideoFile(file) ? 'Uploading video…' : 'Uploading…') : 'Upload'}
               </button>
               <button
                 onClick={() => setFile(null)}
@@ -242,10 +231,10 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
           </div>
         ) : (
           <label className="mt-3 inline-block cursor-pointer rounded border border-sky-600 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50">
-            + Add photo
+            + Add photo or video
             <input
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept={ACCEPT_MEDIA}
               className="hidden"
               onChange={(e) => {
                 setFile(e.target.files?.[0] ?? null);
@@ -257,7 +246,7 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
         )
       ) : (
         <p className="mt-2 text-xs text-gray-400">
-          {user ? 'Please confirm your email to add photos.' : 'Log in to add photos.'}
+          {user ? 'Please confirm your email to add photos or videos.' : 'Log in to add photos or videos.'}
         </p>
       )}
 
@@ -269,12 +258,24 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
           onClick={() => setOpen(null)}
         >
           <div className="flex max-h-full max-w-3xl flex-col items-center" onClick={(e) => e.stopPropagation()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={urlOf(open.storage_path)}
-              alt={open.caption ?? 'Dive photo'}
-              className="max-h-[75vh] max-w-full rounded object-contain"
-            />
+            {open.type === 'video' ? (
+              <video
+                src={mediaUrl(open)}
+                poster={mediaThumbUrl(open) ?? undefined}
+                controls
+                autoPlay
+                playsInline
+                loop
+                className="max-h-[75vh] max-w-full rounded bg-black"
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={mediaUrl(open)}
+                alt={open.caption ?? 'Dive photo'}
+                className="max-h-[75vh] max-w-full rounded object-contain"
+              />
+            )}
             <div className="mt-3 text-center text-sm text-white">
               {open.caption && <div className="mb-1">{open.caption}</div>}
               <div className="text-xs text-gray-300">
@@ -285,7 +286,7 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
               <button
                 onClick={() => toggleLike(open)}
                 disabled={!isVerified}
-                title={isVerified ? undefined : 'Log in and confirm your email to like photos'}
+                title={isVerified ? undefined : 'Log in and confirm your email to like'}
                 aria-pressed={likedIds.has(open.id)}
                 className={`rounded border px-3 py-1.5 text-sm font-medium disabled:opacity-60 ${
                   likedIds.has(open.id)

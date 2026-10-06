@@ -49,3 +49,22 @@ export type Mode =
 
 // Average rating + number of reviews of a spot or school
 export type RatingInfo = { avg: number; count: number };
+
+// One post in the feed (photo or video), as returned by the database function get_feed()
+export type FeedItem = {
+  id: string;
+  user_id: string;
+  spot_id: string;
+  type: string; // 'image' | 'video'
+  storage_path: string;
+  poster_path: string | null;
+  duration_s: number | null;
+  caption: string | null;
+  created_at: string;
+  username: string | null;
+  cert_level: string | null;
+  spot_name: string | null;
+  spot_country: string | null;
+  like_count: number;
+  liked: boolean;
+};
