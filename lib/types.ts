@@ -7,6 +7,7 @@ export type Spot = {
   max_depth_m: number | null;
   level: string | null;
   best_season: string | null;
+  country_code: string | null;
 };
 
 export type School = {
@@ -18,12 +19,13 @@ export type School = {
   website: string | null;
   phone: string | null;
   email: string | null;
+  country_code: string | null;
 };
 
 export type Selection = { kind: 'spot' | 'school'; id: string };
 
-export const SPOT_COLUMNS = 'id,name,description,lat,lng,max_depth_m,level,best_season';
-export const SCHOOL_COLUMNS = 'id,name,description,lat,lng,website,phone,email';
+export const SPOT_COLUMNS = 'id,name,description,lat,lng,max_depth_m,level,best_season,country_code';
+export const SCHOOL_COLUMNS = 'id,name,description,lat,lng,website,phone,email,country_code';
 
 // [longitude, latitude]
 export type LngLat = [number, number];

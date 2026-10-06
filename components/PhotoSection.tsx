@@ -5,8 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { resizeImage } from '@/lib/image';
 import { useDirtyFlag } from '@/components/DirtyContext';
-
-const BUCKET = 'spot-photos';
+import { photoUrl as urlOf, thumbPath as thumbOf, PHOTO_BUCKET as BUCKET } from '@/lib/photos';
 
 type Row = {
   id: string;
@@ -19,16 +18,15 @@ type Row = {
 
 type Photo = Omit<Row, 'profiles'> & { username: string | null };
 
-const urlOf = (path: string) => supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
-// thumbnail has the same name with "_t" before the file ending
-const thumbOf = (path: string) => path.replace(/(\.[a-z]+)$/i, '_t$1');
-
 export default function PhotoSection({ spotId }: { spotId: string }) {
   const { user, isAdmin, isVerified } = useAuth();
   const canUpload = isVerified || isAdmin;
+  const uid = user?.id;
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -60,11 +58,53 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
       }))
     );
     setLoading(false);
-  }, [spotId]);
+
+    // likes: numbers for everybody, and which ones are mine
+    const ids = rows.map((r) => r.id);
+    if (ids.length === 0) return;
+    const countRes = await supabase.rpc('media_like_counts', { p_spot: spotId });
+    const map: Record<string, number> = {};
+    ((countRes.data as { media_id: string; like_count: number }[] | null) ?? []).forEach((c) => {
+      map[c.media_id] = Number(c.like_count);
+    });
+    setCounts(map);
+
+    if (uid) {
+      const { data: mine } = await supabase
+        .from('media_likes')
+        .select('media_id')
+        .eq('user_id', uid)
+        .in('media_id', ids);
+      setLikedIds(new Set(((mine as { media_id: string }[] | null) ?? []).map((m) => m.media_id)));
+    } else {
+      setLikedIds(new Set());
+    }
+  }, [spotId, uid]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  async function toggleLike(p: Photo) {
+    if (!uid || !isVerified) return;
+    const liked = likedIds.has(p.id);
+    // show the change right away, then save it
+    setLikedIds((prev) => {
+      const next = new Set(prev);
+      if (liked) next.delete(p.id);
+      else next.add(p.id);
+      return next;
+    });
+    setCounts((prev) => ({ ...prev, [p.id]: Math.max(0, (prev[p.id] ?? 0) + (liked ? -1 : 1)) }));
+
+    const { error: err } = liked
+      ? await supabase.from('media_likes').delete().eq('media_id', p.id).eq('user_id', uid)
+      : await supabase.from('media_likes').insert({ media_id: p.id });
+    if (err) {
+      console.error('like error:', err.message);
+      await load(); // go back to what is really saved
+    }
+  }
 
   async function upload() {
     if (!file || !user) return;
@@ -148,7 +188,7 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
             <button
               key={p.id}
               onClick={() => setOpen(p)}
-              className="aspect-square overflow-hidden rounded bg-gray-100"
+              className="relative aspect-square overflow-hidden rounded bg-gray-100"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -157,6 +197,11 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
                 loading="lazy"
                 className="h-full w-full object-cover"
               />
+              {(counts[p.id] ?? 0) > 0 && (
+                <span className="absolute bottom-0.5 left-1 text-[11px] font-medium text-white drop-shadow">
+                  ♥ {counts[p.id]}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -236,7 +281,20 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
                 by {open.username ?? 'unknown'} · {new Date(open.created_at).toLocaleDateString()}
               </div>
             </div>
-            <div className="mt-3 flex gap-2">
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              <button
+                onClick={() => toggleLike(open)}
+                disabled={!isVerified}
+                title={isVerified ? undefined : 'Log in and confirm your email to like photos'}
+                aria-pressed={likedIds.has(open.id)}
+                className={`rounded border px-3 py-1.5 text-sm font-medium disabled:opacity-60 ${
+                  likedIds.has(open.id)
+                    ? 'border-red-500 bg-red-500 text-white'
+                    : 'border-gray-300 text-white hover:bg-white/10'
+                }`}
+              >
+                {likedIds.has(open.id) ? '♥' : '♡'} {counts[open.id] ?? 0}
+              </button>
               {(open.user_id === user?.id || isAdmin) && (
                 <button
                   onClick={() => remove(open)}

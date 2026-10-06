@@ -1,3 +1,5 @@
+import { COUNTRY_OPTIONS } from '@/lib/countries';
+
 export type Kind = 'spot' | 'school';
 
 export type Field = {
@@ -15,10 +17,12 @@ export const FIELDS: Record<Kind, Field[]> = {
     { key: 'max_depth_m', label: 'Max depth (m)', type: 'number' },
     { key: 'level', label: 'Level', type: 'select', options: ['beginner', 'intermediate', 'advanced'] },
     { key: 'best_season', label: 'Best season', type: 'text' },
+    { key: 'country_code', label: 'Country', type: 'select', options: COUNTRY_OPTIONS },
   ],
   school: [
     { key: 'name', label: 'Name', type: 'text', required: true },
     { key: 'description', label: 'Description', type: 'textarea' },
+    { key: 'country_code', label: 'Country', type: 'select', options: COUNTRY_OPTIONS },
     { key: 'website', label: 'Website', type: 'text' },
     { key: 'phone', label: 'Phone', type: 'text' },
     { key: 'email', label: 'Email', type: 'text' },

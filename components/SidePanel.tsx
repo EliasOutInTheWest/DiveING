@@ -15,6 +15,7 @@ import {
 } from '@/lib/types';
 import { FIELDS, buildPayload, inputClass, type Field, type Kind } from '@/lib/fields';
 import { lengthKm } from '@/lib/geo';
+import { countryName } from '@/lib/countries';
 import PhotoSection from '@/components/PhotoSection';
 import ReviewsSection from '@/components/ReviewsSection';
 import Stars from '@/components/Stars';
@@ -24,6 +25,7 @@ const BOAT_SPEED_KMH = 25; // used for the duration estimate of a new route
 
 function renderValue(f: Field, v: string | number | null) {
   if (v == null || v === '') return <span className="text-gray-400">—</span>;
+  if (f.key === 'country_code') return countryName(String(v));
   if (f.key === 'max_depth_m') return `${v} m`;
   if (f.key === 'website') {
     const url = String(v);
@@ -54,6 +56,10 @@ type Props = {
   onOpen: (s: Selection) => void;
   rating?: RatingInfo;
   onReviewsChanged: () => void;
+  liked?: boolean;
+  likeCount?: number;
+  canLike?: boolean;
+  onToggleLike?: () => void;
 };
 
 export default function SidePanel({
@@ -72,6 +78,10 @@ export default function SidePanel({
   onOpen,
   rating,
   onReviewsChanged,
+  liked = false,
+  likeCount = 0,
+  canLike = false,
+  onToggleLike,
 }: Props) {
   const fields = FIELDS[kind];
   const record = item as unknown as Record<string, string | number | null>;
@@ -206,16 +216,38 @@ export default function SidePanel({
             <h2 className="mt-2 text-xl font-semibold">{drawing ? `Boat route from ${item.name}` : item.name}</h2>
           )}
           {!editing && !drawing && (
-            <div className="mt-1 flex items-center gap-2 text-sm">
-              {rating && rating.count > 0 ? (
-                <>
-                  <Stars value={rating.avg} />
-                  <span className="text-gray-600">
-                    {rating.avg.toFixed(1)} ({rating.count})
-                  </span>
-                </>
-              ) : (
-                <span className="text-gray-400">No reviews yet</span>
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              <span className="flex items-center gap-2">
+                {rating && rating.count > 0 ? (
+                  <>
+                    <Stars value={rating.avg} />
+                    <span className="text-gray-600">
+                      {rating.avg.toFixed(1)} ({rating.count})
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-gray-400">No reviews yet</span>
+                )}
+              </span>
+              {kind === 'spot' && onToggleLike && (
+                <button
+                  onClick={onToggleLike}
+                  disabled={!canLike}
+                  aria-pressed={liked}
+                  title={
+                    canLike
+                      ? liked
+                        ? 'Remove from favourites'
+                        : 'Add to favourites'
+                      : 'Log in and confirm your email to like dive spots'
+                  }
+                  className={`flex items-center gap-1 disabled:opacity-60 ${
+                    liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'
+                  }`}
+                >
+                  <span className="text-lg leading-none">{liked ? '♥' : '♡'}</span>
+                  <span className="text-gray-600">{likeCount}</span>
+                </button>
               )}
             </div>
           )}
@@ -346,7 +378,7 @@ export default function SidePanel({
                   <option value="">—</option>
                   {f.options?.map((o) => (
                     <option key={o} value={o}>
-                      {o}
+                      {f.key === 'country_code' ? countryName(o) : o}
                     </option>
                   ))}
                 </select>

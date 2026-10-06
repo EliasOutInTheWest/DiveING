@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { SCHOOL_COLUMNS, SPOT_COLUMNS, type LngLat, type School, type Spot } from '@/lib/types';
 import { FIELDS, buildPayload, inputClass, type Kind } from '@/lib/fields';
+import { countryName } from '@/lib/countries';
 
 type Props = {
   kind: Kind;
@@ -18,6 +19,31 @@ export default function CreatePanel({ kind, at, isAdmin, onCancel, onCreated }: 
   const [form, setForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // try to fill in the country from the pin position (you can change it)
+  const lng = at[0];
+  const lat = at[1];
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=3&accept-language=en&lat=${lat}&lon=${lng}`
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        const code = String(data?.address?.country_code ?? '').toUpperCase();
+        if (!cancelled && /^[A-Z]{2}$/.test(code)) {
+          setForm((f) => (f.country_code ? f : { ...f, country_code: code }));
+        }
+      } catch {
+        // no problem: the country can be chosen by hand
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [lat, lng]);
 
   async function create() {
     const built = buildPayload(fields, form);
@@ -93,7 +119,7 @@ export default function CreatePanel({ kind, at, isAdmin, onCancel, onCreated }: 
                 <option value="">—</option>
                 {f.options?.map((o) => (
                   <option key={o} value={o}>
-                    {o}
+                    {f.key === 'country_code' ? countryName(o) : o}
                   </option>
                 ))}
               </select>

@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { CERT_AGENCIES, CERT_LEVELS, certLabel } from '@/lib/certs';
+import { countryName } from '@/lib/countries';
+import { photoUrl, thumbPath } from '@/lib/photos';
 
 const USERNAME_RE = /^[A-Za-z0-9_-]{3,30}$/;
 const inputClass = 'w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900';
@@ -18,7 +20,25 @@ type ProfileRow = {
 };
 type PrivateRow = { license_number: string | null; adult_confirmed: boolean };
 
-export default function ProfilePanel({ onClose }: { onClose: () => void }) {
+type LikedSpot = {
+  id: string;
+  name: string;
+  level: string | null;
+  max_depth_m: number | null;
+  country_code: string | null;
+};
+type LikedPhoto = { id: string; storage_path: string; caption: string | null; spot_id: string };
+
+const first = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
+
+type Props = {
+  onClose: () => void;
+  onOpenSpot: (spotId: string) => void; // jump to a spot on the map
+  onShowFavourites: () => void; // map: favourites only
+  onLikesChanged: () => void; // tells the map to reload the hearts
+};
+
+export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, onLikesChanged }: Props) {
   const { user, isAdmin, refresh } = useAuth();
   const uid = user?.id;
   const email = user?.email;
@@ -34,6 +54,8 @@ export default function ProfilePanel({ onClose }: { onClose: () => void }) {
   const [memberSince, setMemberSince] = useState<string | null>(null);
   const [photoCount, setPhotoCount] = useState(0);
   const [spotCount, setSpotCount] = useState(0);
+  const [likedSpots, setLikedSpots] = useState<LikedSpot[]>([]);
+  const [likedPhotos, setLikedPhotos] = useState<LikedPhoto[]>([]);
 
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
@@ -86,6 +108,42 @@ export default function ProfilePanel({ onClose }: { onClose: () => void }) {
       cancelled = true;
     };
   }, [uid]);
+
+  const loadFavourites = useCallback(async () => {
+    if (!uid) return;
+    const [spotRes, photoRes] = await Promise.all([
+      supabase
+        .from('spot_likes')
+        .select('created_at,spots(id,name,level,max_depth_m,country_code)')
+        .eq('user_id', uid)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('media_likes')
+        .select('created_at,media(id,storage_path,caption,spot_id)')
+        .eq('user_id', uid)
+        .order('created_at', { ascending: false }),
+    ]);
+    const spotRows = (spotRes.data ?? []) as unknown as { spots: LikedSpot | LikedSpot[] | null }[];
+    setLikedSpots(spotRows.map((r) => first(r.spots)).filter((s): s is LikedSpot => s !== null));
+    const photoRows = (photoRes.data ?? []) as unknown as { media: LikedPhoto | LikedPhoto[] | null }[];
+    setLikedPhotos(photoRows.map((r) => first(r.media)).filter((p): p is LikedPhoto => p !== null));
+  }, [uid]);
+
+  useEffect(() => {
+    loadFavourites();
+  }, [loadFavourites]);
+
+  async function unlikeSpot(spotId: string) {
+    if (!uid) return;
+    setLikedSpots((prev) => prev.filter((s) => s.id !== spotId));
+    const { error: err } = await supabase.from('spot_likes').delete().eq('user_id', uid).eq('spot_id', spotId);
+    if (err) {
+      console.error('unlike error:', err.message);
+      await loadFavourites();
+      return;
+    }
+    onLikesChanged();
+  }
 
   async function save() {
     if (!uid) return;
@@ -202,6 +260,84 @@ export default function ProfilePanel({ onClose }: { onClose: () => void }) {
               <div className="rounded bg-gray-50 p-3">
                 <div className="text-xl font-semibold">{diveCount.trim() === '' ? '—' : diveCount}</div>
                 <div className="text-xs text-gray-500">Dives (self-reported)</div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">Favourites</h3>
+                {likedSpots.length > 0 && (
+                  <button onClick={onShowFavourites} className="text-xs font-medium text-sky-700 hover:underline">
+                    Show favourites on the map
+                  </button>
+                )}
+              </div>
+
+              <div>
+                <div className="text-sm font-medium">♥ Liked dive spots ({likedSpots.length})</div>
+                {likedSpots.length === 0 ? (
+                  <p className="mt-1 text-sm text-gray-400">
+                    No liked dive spots yet. Click the heart on a dive spot.
+                  </p>
+                ) : (
+                  <ul className="mt-1 divide-y divide-gray-100 rounded border border-gray-200 text-sm">
+                    {likedSpots.map((s) => (
+                      <li key={s.id} className="flex items-center justify-between gap-2 px-3 py-2">
+                        <button
+                          onClick={() => onOpenSpot(s.id)}
+                          className="min-w-0 truncate text-left font-medium text-sky-700 hover:underline"
+                        >
+                          {s.name}
+                        </button>
+                        <span className="shrink-0 text-xs text-gray-500">
+                          {[
+                            s.level,
+                            s.max_depth_m != null ? `${s.max_depth_m} m` : null,
+                            s.country_code ? countryName(s.country_code) : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </span>
+                        <button
+                          onClick={() => unlikeSpot(s.id)}
+                          aria-label="Remove from favourites"
+                          title="Remove from favourites"
+                          className="shrink-0 text-red-500 hover:text-red-600"
+                        >
+                          ♥
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div>
+                <div className="text-sm font-medium">♥ Liked photos ({likedPhotos.length})</div>
+                {likedPhotos.length === 0 ? (
+                  <p className="mt-1 text-sm text-gray-400">
+                    No liked photos yet. Open a photo and click the heart.
+                  </p>
+                ) : (
+                  <div className="mt-1 grid grid-cols-4 gap-1.5">
+                    {likedPhotos.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => onOpenSpot(p.spot_id)}
+                        title="Open this dive spot"
+                        className="aspect-square overflow-hidden rounded bg-gray-100"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={photoUrl(thumbPath(p.storage_path))}
+                          alt={p.caption ?? 'Liked photo'}
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

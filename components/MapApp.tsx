@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import {
   SCHOOL_COLUMNS,
@@ -20,6 +20,8 @@ import CreatePanel from '@/components/CreatePanel';
 import AuthBox from '@/components/AuthBox';
 import AdminPanel from '@/components/AdminPanel';
 import ProfilePanel from '@/components/ProfilePanel';
+import FilterPanel from '@/components/FilterPanel';
+import { DEFAULT_FILTERS, activeFilterCount, applyFilters, type Filters } from '@/lib/filters';
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
 import { DirtyProvider, useDirty } from '@/components/DirtyContext';
 import { DEPTH_LEGEND_GRADIENT, DEPTH_STOPS } from '@/lib/depth';
@@ -50,6 +52,12 @@ function MapView() {
   const [view3d, setView3d] = useState(false);
   const [ratings, setRatings] = useState<Record<string, RatingInfo>>({});
   const [ratingsVersion, setRatingsVersion] = useState(0);
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [likedSpotIds, setLikedSpotIds] = useState<Set<string>>(new Set());
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+  const [likesVersion, setLikesVersion] = useState(0);
+  const uid = user?.id;
 
   // load spots and schools
   useEffect(() => {
@@ -65,6 +73,34 @@ function MapView() {
     }
     load();
   }, []);
+
+  // load likes: the numbers for everybody, and which spots I liked
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const countRes = await supabase.rpc('spot_like_counts');
+      const counts: Record<string, number> = {};
+      ((countRes.data as { spot_id: string; like_count: number }[] | null) ?? []).forEach((r) => {
+        counts[r.spot_id] = Number(r.like_count);
+      });
+      let mine = new Set<string>();
+      if (uid) {
+        const { data } = await supabase.from('spot_likes').select('spot_id').eq('user_id', uid);
+        mine = new Set(((data as { spot_id: string }[] | null) ?? []).map((r) => r.spot_id));
+      }
+      if (cancelled) return;
+      setLikeCounts(counts);
+      setLikedSpotIds(mine);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, likesVersion]);
+
+  // "favourites only" makes no sense when logged out
+  useEffect(() => {
+    if (!uid) setFilters((f) => (f.favouritesOnly ? { ...f, favouritesOnly: false } : f));
+  }, [uid]);
 
   // load the average ratings of all spots and schools
   useEffect(() => {
@@ -121,6 +157,44 @@ function MapView() {
       ? spots.find((s) => s.id === selected.id)
       : schools.find((s) => s.id === selected.id)
     : undefined;
+
+  // pins after the filters
+  const { visibleSpots, visibleSchools } = useMemo(
+    () => applyFilters(spots, schools, filters, likedSpotIds),
+    [spots, schools, filters, likedSpotIds]
+  );
+  const countryCodes = useMemo(() => {
+    const set = new Set<string>();
+    spots.forEach((s) => s.country_code && set.add(s.country_code));
+    schools.forEach((s) => s.country_code && set.add(s.country_code));
+    return [...set];
+  }, [spots, schools]);
+  const hasUnknownCountry = useMemo(
+    () => spots.some((s) => !s.country_code) || schools.some((s) => !s.country_code),
+    [spots, schools]
+  );
+  const filterCount = activeFilterCount(filters);
+
+  async function toggleSpotLike(spotId: string) {
+    if (!uid || !isVerified) return;
+    const liked = likedSpotIds.has(spotId);
+    // show the change right away, then save it
+    setLikedSpotIds((prev) => {
+      const next = new Set(prev);
+      if (liked) next.delete(spotId);
+      else next.add(spotId);
+      return next;
+    });
+    setLikeCounts((prev) => ({ ...prev, [spotId]: Math.max(0, (prev[spotId] ?? 0) + (liked ? -1 : 1)) }));
+
+    const { error } = liked
+      ? await supabase.from('spot_likes').delete().eq('spot_id', spotId).eq('user_id', uid)
+      : await supabase.from('spot_likes').insert({ spot_id: spotId });
+    if (error) {
+      console.error('like error:', error.message);
+      setLikesVersion((v) => v + 1); // go back to what is really saved
+    }
+  }
 
   function handleSaved(kind: 'spot' | 'school', updated: Spot | School) {
     if (kind === 'spot') {
@@ -180,6 +254,8 @@ function MapView() {
       <DiveMap
         spots={spots}
         schools={schools}
+        visibleSpots={visibleSpots}
+        visibleSchools={visibleSchools}
         selected={selected}
         routes={routes}
         mode={mode}
@@ -218,6 +294,17 @@ function MapView() {
               </button>
             )}
             {!canAddSpot && <span className="text-gray-500">Log in to add dive spots</span>}
+            <button
+              onClick={() => setFiltersOpen((v) => !v)}
+              aria-expanded={filtersOpen}
+              className={`rounded border px-3 py-1 font-medium ${
+                filterCount > 0
+                  ? 'border-sky-600 bg-sky-50 text-sky-800'
+                  : 'border-gray-300 text-gray-800 hover:bg-gray-50'
+              }`}
+            >
+              Filters{filterCount > 0 ? ` (${filterCount})` : ''}
+            </button>
           </>
         )}
         {mode.type === 'place' && (
@@ -237,6 +324,17 @@ function MapView() {
         )}
         {mode.type === 'route' && (
           <span>Drawing a boat route: click along the water to add points</span>
+        )}
+        {mode.type === 'idle' && filtersOpen && (
+          <FilterPanel
+            filters={filters}
+            onChange={setFilters}
+            countryCodes={countryCodes}
+            hasUnknownCountry={hasUnknownCountry}
+            shown={visibleSpots.length}
+            total={spots.length}
+            loggedIn={!!user}
+          />
         )}
       </div>
 
@@ -285,7 +383,22 @@ function MapView() {
 
       <AuthBox onOpenAdmin={() => setAdminOpen(true)} onOpenProfile={() => setProfileOpen(true)} />
       {isAdmin && adminOpen && <AdminPanel onClose={() => setAdminOpen(false)} />}
-      {user && profileOpen && <ProfilePanel onClose={() => setProfileOpen(false)} />}
+      {user && profileOpen && (
+        <ProfilePanel
+          onClose={() => setProfileOpen(false)}
+          onOpenSpot={(id) => {
+            setProfileOpen(false);
+            setMode({ type: 'idle' });
+            setSelected({ kind: 'spot', id });
+          }}
+          onShowFavourites={() => {
+            setProfileOpen(false);
+            setFilters((f) => ({ ...f, favouritesOnly: true }));
+            setFiltersOpen(true);
+          }}
+          onLikesChanged={() => setLikesVersion((v) => v + 1)}
+        />
+      )}
 
       {mode.type === 'place' && mode.at && (
         <CreatePanel
@@ -318,6 +431,10 @@ function MapView() {
           onRoutesChanged={() => setRoutesVersion((v) => v + 1)}
           rating={ratings[`${selected.kind}:${selected.id}`]}
           onReviewsChanged={() => setRatingsVersion((v) => v + 1)}
+          liked={selected.kind === 'spot' && likedSpotIds.has(selected.id)}
+          likeCount={selected.kind === 'spot' ? (likeCounts[selected.id] ?? 0) : 0}
+          canLike={isVerified}
+          onToggleLike={selected.kind === 'spot' ? () => toggleSpotLike(selected.id) : undefined}
           onOpen={(s) => {
             setMode({ type: 'idle' });
             setSelected(s);

@@ -47,6 +47,8 @@ type DraftFeature = {
 type Props = {
   spots: Spot[];
   schools: School[];
+  visibleSpots: Spot[]; // after filters
+  visibleSchools: School[];
   selected: Selection | null;
   routes: BoatRoute[];
   mode: Mode;
@@ -60,6 +62,8 @@ type Props = {
 export default function DiveMap({
   spots,
   schools,
+  visibleSpots,
+  visibleSchools,
   selected,
   routes,
   mode,
@@ -183,14 +187,14 @@ export default function DiveMap({
       markers.push(marker);
     }
 
-    spots.forEach((s) => add('spot', s.id, s.lng, s.lat, '#0ea5e9')); // blue = dive spot
-    schools.forEach((s) => add('school', s.id, s.lng, s.lat, '#f97316')); // orange = dive school
+    visibleSpots.forEach((s) => add('spot', s.id, s.lng, s.lat, '#0ea5e9')); // blue = dive spot
+    visibleSchools.forEach((s) => add('school', s.id, s.lng, s.lat, '#f97316')); // orange = dive school
 
     return () => {
       markers.forEach((m) => m.remove());
       markerEls.current.clear();
     };
-  }, [spots, schools, onSelect]);
+  }, [visibleSpots, visibleSchools, onSelect]);
 
   // 2b) Highlight the selected pin, make all others lighter
   useEffect(() => {
@@ -206,7 +210,7 @@ export default function DiveMap({
         svg.style.transform = isSelected ? 'scale(1.3)' : '';
       }
     });
-  }, [selected, spots, schools]);
+  }, [selected, visibleSpots, visibleSchools]);
 
   // 3) Selecting zooms in a bit, selecting another pin only moves, deselecting zooms back out
   useEffect(() => {
