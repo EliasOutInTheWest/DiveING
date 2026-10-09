@@ -6,8 +6,9 @@ import { useAuth } from '@/components/AuthProvider';
 import { useDirtyFlag } from '@/components/DirtyContext';
 import { ACCEPT_MEDIA, MAX_VIDEO_SECONDS, isVideoFile, uploadMedia } from '@/lib/upload';
 import { countryName } from '@/lib/countries';
+import { activityOf } from '@/lib/activities';
 
-type SpotOption = { id: string; name: string; country_code: string | null };
+type SpotOption = { id: string; name: string; country_code: string | null; activity: string | null };
 
 type Props = {
   onClose: () => void;
@@ -30,7 +31,7 @@ export default function UploadPanel({ onClose, onUploaded }: Props) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from('spots').select('id,name,country_code').order('name');
+      const { data } = await supabase.from('spots').select('id,name,country_code,activity').order('name');
       if (!cancelled) setSpots((data as SpotOption[] | null) ?? []);
     })();
     return () => {
@@ -98,7 +99,7 @@ export default function UploadPanel({ onClose, onUploaded }: Props) {
           {chosen ? (
             <div className="mt-1 flex items-center justify-between rounded border border-sky-300 bg-sky-50 px-2 py-1.5">
               <span>
-                📍 {chosen.name}
+                {activityOf(chosen.activity).emoji} {chosen.name}
                 {chosen.country_code ? ` (${countryName(chosen.country_code)})` : ''}
               </span>
               <button onClick={() => setSpotId('')} disabled={busy} className="text-xs text-sky-700 hover:underline">
@@ -109,20 +110,20 @@ export default function UploadPanel({ onClose, onUploaded }: Props) {
             <>
               <input
                 type="text"
-                placeholder="Search a dive spot…"
+                placeholder="Search a spot…"
                 className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-gray-900"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
               <ul className="mt-1 max-h-40 overflow-auto rounded border border-gray-200">
-                {matches.length === 0 && <li className="px-2 py-1.5 text-gray-400">No dive spot found.</li>}
+                {matches.length === 0 && <li className="px-2 py-1.5 text-gray-400">No spot found.</li>}
                 {matches.map((s) => (
                   <li key={s.id}>
                     <button
                       onClick={() => setSpotId(s.id)}
                       className="block w-full px-2 py-1.5 text-left hover:bg-sky-50"
                     >
-                      {s.name}
+                      {activityOf(s.activity).emoji} {s.name}
                       {s.country_code && <span className="text-gray-400"> · {countryName(s.country_code)}</span>}
                     </button>
                   </li>

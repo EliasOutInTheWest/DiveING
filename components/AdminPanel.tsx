@@ -179,7 +179,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
                   <th className="px-4 py-2 font-medium">Account</th>
                   <th className="px-4 py-2 font-medium">Dates</th>
                   <th className="px-4 py-2 font-medium">Admin</th>
-                  <th className="px-4 py-2 font-medium">Dive schools (staff)</th>
+                  <th className="px-4 py-2 font-medium">Schools and providers (staff)</th>
                 </tr>
               </thead>
               <tbody>

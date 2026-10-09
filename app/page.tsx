@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
+import { ACTIVITIES } from '@/lib/activities';
 
 export const metadata: Metadata = {
-  title: 'DiveING – find your first dives',
+  title: 'DiveING – your adventure map',
   description:
-    'Discover dive spots and dive schools, see how to get there by boat, and share photos and reviews with the diving community.',
+    'Discover dive spots, hiking spots, campsites and bike spots, find guides and schools, and share photos and videos with the community.',
 };
 
 // Live numbers for the start page (the page still works if this fails)
@@ -26,50 +27,50 @@ async function getCounts() {
 const FEATURES = [
   {
     icon: '🗺️',
-    title: 'Interactive dive map',
-    text: 'Browse dive spots and dive schools around you, with details like depth, level and best season.',
+    title: 'Interactive adventure map',
+    text: 'Browse dive spots, hiking spots, campsites and more, with details like level, season and country.',
+  },
+  {
+    icon: '🎯',
+    title: 'Only what you love',
+    text: 'Choose your favourite activities, for example diving and hiking. The map and the feed then show only those.',
   },
   {
     icon: '⛵',
     title: 'Boat routes',
-    text: 'See how long the boat ride from a dive school to a spot takes and which way it goes.',
+    text: 'For diving: see how long the boat ride from a dive school to a spot takes and which way it goes.',
   },
   {
     icon: '🌊',
     title: 'Depth map and 3D',
-    text: 'Switch on the depth view and tilt the map to see the shape of the sea floor.',
+    text: 'Switch on the depth view, or tilt the map to see the shape of the sea floor and the mountains.',
   },
   {
     icon: '⭐',
     title: 'Ratings and reviews',
-    text: 'Read honest reviews from other divers and share your own experience.',
+    text: 'Read honest reviews from other people and share your own experience.',
   },
   {
     icon: '📷',
     title: 'Photos and videos',
-    text: 'Look at photos and short videos of a spot before you go, and add your own after the dive.',
+    text: 'Look at photos and short videos of a spot before you go, and add your own afterwards.',
   },
   {
     icon: '🎬',
     title: 'Reels-style feed',
-    text: 'Swipe through photos and videos from the community. The feed shows you posts that fit your level and the spots you like.',
+    text: 'Swipe through photos and videos from the community. The feed shows you posts that fit your activities and the spots you like.',
   },
   {
     icon: '♥',
     title: 'Likes and favourites',
     text: 'Like spots, photos and videos, and find them again in your profile.',
   },
-  {
-    icon: '🏫',
-    title: 'Dive school pages',
-    text: 'Schools look after their own page and boat routes, so the information stays up to date.',
-  },
 ];
 
 const STEPS = [
-  { title: 'Explore the map', text: 'Find dive spots and dive schools near you or in the place you will travel to.' },
-  { title: 'Check the details', text: 'Read about depth and level, look at photos and reviews, and see the boat route.' },
-  { title: 'Join the community', text: 'Create a free account, add spots, upload photos and rate your dives.' },
+  { title: 'Pick your activities', text: 'Choose what you are into: diving, hiking, camping, biking, climbing or paddling.' },
+  { title: 'Explore the map', text: 'Find spots, schools and guides near you or where you will travel to, and read reviews.' },
+  { title: 'Join the community', text: 'Create a free account, add spots, upload photos and videos and rate your adventures.' },
 ];
 
 export default async function Landing() {
@@ -87,7 +88,7 @@ export default async function Landing() {
         <div className="pointer-events-none absolute right-1/3 top-96 h-24 w-24 rounded-full bg-white/5" />
 
         <nav className="relative mx-auto flex max-w-5xl items-center justify-between">
-          <span className="text-xl font-bold tracking-tight">🤿 DiveING</span>
+          <span className="text-xl font-bold tracking-tight">🧭 DiveING</span>
           <div className="flex items-center gap-5 text-sm">
             <a href="#features" className="hidden text-sky-100 hover:text-white sm:inline">
               Features
@@ -96,7 +97,7 @@ export default async function Landing() {
               How it works
             </a>
             <a href="#schools" className="hidden text-sky-100 hover:text-white sm:inline">
-              For dive schools
+              For schools and guides
             </a>
             <Link href="/feed" className="text-sky-100 hover:text-white">
               Feed
@@ -112,11 +113,11 @@ export default async function Landing() {
 
         <div className="relative mx-auto mt-20 max-w-5xl">
           <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
-            Find your first dives.
+            Find your next adventure.
           </h1>
           <p className="mt-5 max-w-xl text-lg text-sky-100">
-            DiveING helps new divers discover dive spots and dive schools, see how to get there by
-            boat, and share photos and reviews with the community.
+            DiveING is a map for diving, hiking, camping, biking and more. Discover spots, find
+            schools and guides, and share photos, videos and reviews with the community.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -150,11 +151,11 @@ export default async function Landing() {
           <div className="grid grid-cols-3 gap-3 rounded-2xl bg-white p-5 text-center shadow-lg ring-1 ring-slate-100">
             <div>
               <div className="text-3xl font-bold text-sky-700">{counts.spots}</div>
-              <div className="text-sm text-slate-500">dive spots</div>
+              <div className="text-sm text-slate-500">spots</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-orange-500">{counts.schools}</div>
-              <div className="text-sm text-slate-500">dive schools</div>
+              <div className="text-sm text-slate-500">schools and guides</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-sky-700">{counts.photos}</div>
@@ -164,11 +165,33 @@ export default async function Landing() {
         </section>
       )}
 
+      {/* ---------- activities ---------- */}
+      <section className="mx-auto max-w-5xl px-6 pt-20">
+        <h2 className="text-center text-3xl font-bold tracking-tight">Choose your adventures</h2>
+        <p className="mx-auto mt-3 max-w-xl text-center text-slate-600">
+          Pick your favourites once. The map and the feed then show only what you love.
+        </p>
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {ACTIVITIES.map((a) => (
+            <Link
+              key={a.value}
+              href={`/map?activity=${a.value}`}
+              className="rounded-xl border-2 p-4 text-center transition hover:shadow-md"
+              style={{ borderColor: a.color }}
+            >
+              <div className="text-4xl">{a.emoji}</div>
+              <div className="mt-2 font-semibold">{a.label}</div>
+              <div className="mt-0.5 text-xs text-slate-500">{a.spot}s</div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* ---------- features ---------- */}
       <section id="features" className="mx-auto max-w-5xl px-6 py-20">
-        <h2 className="text-center text-3xl font-bold tracking-tight">Everything for your first dives</h2>
+        <h2 className="text-center text-3xl font-bold tracking-tight">Everything for your next trip</h2>
         <p className="mx-auto mt-3 max-w-xl text-center text-slate-600">
-          One place to find where to dive, who to dive with and what others experienced.
+          One place to find where to go, who to go with and what others experienced.
         </p>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f) => (
@@ -202,11 +225,11 @@ export default async function Landing() {
       {/* ---------- dive schools ---------- */}
       <section id="schools" className="mx-auto max-w-5xl px-6 py-20">
         <div className="rounded-2xl bg-sky-50 p-8 sm:p-12">
-          <h2 className="text-3xl font-bold tracking-tight">Are you a dive school?</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Are you a school, guide or provider?</h2>
           <p className="mt-3 max-w-2xl text-slate-700">
-            Show your school on the map, keep your details up to date and draw the boat routes to
-            your dive spots. Create an account on the map and ask an admin to link your school to
-            it.
+            Show your dive school, guiding business, campground, bike shop or rental on the map and
+            keep your details up to date. Dive schools can also draw boat routes to their dive
+            spots. Create an account on the map and ask an admin to link your page to it.
           </p>
           <Link
             href="/map"
@@ -222,8 +245,9 @@ export default async function Landing() {
         <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <strong>Please note:</strong> The information on DiveING is provided by the community and
           meant for orientation only. It does not replace a briefing by a certified dive
-          professional. The depth map uses coarse global data and is not suitable for dive
-          planning or navigation.
+          professional, a mountain guide or local authorities. Check weather, conditions and your
+          own skills before you go. The depth map uses coarse global data and is not suitable for
+          dive planning or navigation.
         </p>
       </section>
 
@@ -231,8 +255,8 @@ export default async function Landing() {
       <footer className="bg-slate-900 px-6 py-10 text-sm text-slate-300">
         <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="text-lg font-bold text-white">🤿 DiveING</div>
-            <p className="mt-1 text-slate-400">A student project to help new divers.</p>
+            <div className="text-lg font-bold text-white">🧭 DiveING</div>
+            <p className="mt-1 text-slate-400">A student project for people who love the outdoors.</p>
           </div>
           <div className="max-w-md text-xs leading-relaxed text-slate-400">
             Map data © OpenStreetMap contributors, map tiles by OpenFreeMap / OpenMapTiles. Depth

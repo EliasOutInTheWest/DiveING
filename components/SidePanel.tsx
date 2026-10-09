@@ -13,7 +13,8 @@ import {
   type Spot,
   type RatingInfo,
 } from '@/lib/types';
-import { FIELDS, buildPayload, inputClass, type Field, type Kind } from '@/lib/fields';
+import { buildPayload, fieldsFor, inputClass, optionLabel, type Field, type Kind } from '@/lib/fields';
+import { activityOf } from '@/lib/activities';
 import { lengthKm } from '@/lib/geo';
 import { countryName } from '@/lib/countries';
 import PhotoSection from '@/components/PhotoSection';
@@ -26,6 +27,7 @@ const BOAT_SPEED_KMH = 25; // used for the duration estimate of a new route
 function renderValue(f: Field, v: string | number | null) {
   if (v == null || v === '') return <span className="text-gray-400">—</span>;
   if (f.key === 'country_code') return countryName(String(v));
+  if (f.key === 'activity') return optionLabel('activity', String(v));
   if (f.key === 'max_depth_m') return `${v} m`;
   if (f.key === 'website') {
     const url = String(v);
@@ -83,12 +85,13 @@ export default function SidePanel({
   canLike = false,
   onToggleLike,
 }: Props) {
-  const fields = FIELDS[kind];
   const record = item as unknown as Record<string, string | number | null>;
+  const activity = activityOf(item.activity);
 
   // editing the details
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
+  const fields = fieldsFor(kind, editing ? form.activity : item.activity); // depth only for diving
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -206,11 +209,10 @@ export default function SidePanel({
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <span
-            className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium text-white ${
-              kind === 'spot' ? 'bg-sky-500' : 'bg-orange-500'
-            }`}
+            className="inline-block rounded-full px-2 py-0.5 text-xs font-medium text-white"
+            style={{ backgroundColor: kind === 'spot' ? activity.color : '#f97316' }}
           >
-            {kind === 'spot' ? 'Dive spot' : 'Dive school'}
+            {activity.emoji} {kind === 'spot' ? activity.spot : activity.provider}
           </span>
           {!editing && (
             <h2 className="mt-2 text-xl font-semibold">{drawing ? `Boat route from ${item.name}` : item.name}</h2>
@@ -239,7 +241,7 @@ export default function SidePanel({
                       ? liked
                         ? 'Remove from favourites'
                         : 'Add to favourites'
-                      : 'Log in and confirm your email to like dive spots'
+                      : 'Log in and confirm your email to like spots'
                   }
                   className={`flex items-center gap-1 disabled:opacity-60 ${
                     liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'
@@ -378,7 +380,7 @@ export default function SidePanel({
                   <option value="">—</option>
                   {f.options?.map((o) => (
                     <option key={o} value={o}>
-                      {f.key === 'country_code' ? countryName(o) : o}
+                      {optionLabel(f.key, o)}
                     </option>
                   ))}
                 </select>
@@ -415,7 +417,7 @@ export default function SidePanel({
         // ---------- read ----------
         <div className="space-y-4">
           {fields
-            .filter((f) => f.key !== 'name')
+            .filter((f) => f.key !== 'name' && f.key !== 'activity')
             .map((f) => (
               <div key={f.key}>
                 <div className="text-xs font-medium uppercase tracking-wide text-gray-500">{f.label}</div>

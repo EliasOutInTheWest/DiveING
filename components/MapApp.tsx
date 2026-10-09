@@ -25,6 +25,8 @@ import { DEFAULT_FILTERS, activeFilterCount, applyFilters, type Filters } from '
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
 import { DirtyProvider, useDirty } from '@/components/DirtyContext';
 import { DEPTH_LEGEND_GRADIENT, DEPTH_STOPS } from '@/lib/depth';
+import ActivityChips from '@/components/ActivityChips';
+import { ACTIVITY_VALUES } from '@/lib/activities';
 
 // The provider makes "who is logged in" available to everything inside
 export default function MapApp() {
@@ -38,7 +40,7 @@ export default function MapApp() {
 }
 
 function MapView() {
-  const { user, isAdmin, isVerified, schoolIds } = useAuth();
+  const { user, isAdmin, isVerified, schoolIds, activities, setActivities } = useAuth();
   const { isDirty } = useDirty();
   const [spots, setSpots] = useState<Spot[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
@@ -97,14 +99,22 @@ function MapView() {
     };
   }, [uid, likesVersion]);
 
-  // links from the feed: /map?spot=ID selects a spot, /map?favourites=1 shows favourites only
+  // links: /map?spot=ID selects a spot, /map?favourites=1 shows favourites only, /map?activity=hiking
   const [linkSpot, setLinkSpot] = useState<string | null>(null);
   const [linkFavourites, setLinkFavourites] = useState(false);
+  const [linkActivity, setLinkActivity] = useState<string | null>(null);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setLinkSpot(params.get('spot'));
     setLinkFavourites(params.get('favourites') === '1');
+    setLinkActivity(params.get('activity')); // /map?activity=hiking from the start page
   }, []);
+
+  useEffect(() => {
+    if (!linkActivity) return;
+    if (ACTIVITY_VALUES.includes(linkActivity)) setActivities([linkActivity]);
+    setLinkActivity(null);
+  }, [linkActivity, setActivities]);
 
   useEffect(() => {
     if (!linkSpot || spots.length === 0) return;
@@ -182,8 +192,8 @@ function MapView() {
 
   // pins after the filters
   const { visibleSpots, visibleSchools } = useMemo(
-    () => applyFilters(spots, schools, filters, likedSpotIds),
-    [spots, schools, filters, likedSpotIds]
+    () => applyFilters(spots, schools, filters, likedSpotIds, activities),
+    [spots, schools, filters, likedSpotIds, activities]
   );
   const countryCodes = useMemo(() => {
     const set = new Set<string>();
@@ -191,6 +201,11 @@ function MapView() {
     schools.forEach((s) => s.country_code && set.add(s.country_code));
     return [...set];
   }, [spots, schools]);
+  const spotsOfChoice = useMemo(
+    () => spots.filter((s) => activities.length === 0 || activities.includes(s.activity)).length,
+    [spots, activities]
+  );
+  const showDepthFilter = activities.length === 0 || activities.includes('diving');
   const hasUnknownCountry = useMemo(
     () => spots.some((s) => !s.country_code) || schools.some((s) => !s.country_code),
     [spots, schools]
@@ -281,7 +296,7 @@ function MapView() {
         selected={selected}
         routes={routes}
         mode={mode}
-        depthMap={depthMap}
+        depthMap={depthMap && showDepthFilter}
         terrain3d={view3d && mode.type === 'idle'}
         onSelect={setSelected}
         onMapClick={handleMapClick}
@@ -310,7 +325,7 @@ function MapView() {
                 onClick={() => startPlace('spot')}
                 className="rounded bg-sky-600 px-3 py-1 font-medium text-white hover:bg-sky-700"
               >
-                + Add dive spot
+                + Add spot
               </button>
             )}
             {isAdmin && (
@@ -318,10 +333,10 @@ function MapView() {
                 onClick={() => startPlace('school')}
                 className="rounded bg-orange-500 px-3 py-1 font-medium text-white hover:bg-orange-600"
               >
-                + Add dive school
+                + Add school / provider
               </button>
             )}
-            {!canAddSpot && <span className="text-gray-500">Log in to add dive spots</span>}
+            {!canAddSpot && <span className="text-gray-500">Log in to add spots</span>}
             <button
               onClick={() => setFiltersOpen((v) => !v)}
               aria-expanded={filtersOpen}
@@ -340,7 +355,7 @@ function MapView() {
             <span>
               {mode.at
                 ? 'Click the map to move the pin'
-                : `Click on the map to place the new ${mode.kind === 'spot' ? 'dive spot' : 'dive school'}`}
+                : `Click on the map to place the new ${mode.kind === 'spot' ? 'spot' : 'school / provider'}`}
             </span>
             <button
               onClick={() => setMode({ type: 'idle' })}
@@ -360,15 +375,23 @@ function MapView() {
             countryCodes={countryCodes}
             hasUnknownCountry={hasUnknownCountry}
             shown={visibleSpots.length}
-            total={spots.length}
+            total={spotsOfChoice}
             loggedIn={!!user}
+            showDepth={showDepthFilter}
           />
         )}
       </div>
 
+      {/* favourite activities: only these are shown on the map (and in the feed) */}
+      {mode.type === 'idle' && (
+        <div className="absolute left-1/2 top-16 z-[9] w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-full bg-white/90 px-2 py-1.5 shadow backdrop-blur sm:top-[4.25rem]">
+          <ActivityChips value={activities} onChange={setActivities} compact />
+        </div>
+      )}
+
       {/* depth map controls + legend */}
       <div className="absolute bottom-10 right-2.5 z-10 flex flex-col items-end gap-2">
-        {depthMap && (
+        {depthMap && showDepthFilter && (
           <div className="w-56 rounded bg-white/95 p-2 text-[11px] leading-snug text-gray-700 shadow">
             <div className="mb-1 font-medium text-gray-900">Depth (m)</div>
             <div className="h-2.5 rounded" style={{ background: DEPTH_LEGEND_GRADIENT }} />
@@ -388,15 +411,17 @@ function MapView() {
           </div>
         )}
         <div className="flex gap-1 rounded bg-white p-1 shadow">
-          <button
-            onClick={() => setDepthMap((v) => !v)}
-            aria-pressed={depthMap}
-            className={`rounded px-2.5 py-1 text-xs font-medium ${
-              depthMap ? 'bg-sky-600 text-white' : 'text-gray-800 hover:bg-gray-100'
-            }`}
-          >
-            Depth
-          </button>
+          {showDepthFilter && (
+            <button
+              onClick={() => setDepthMap((v) => !v)}
+              aria-pressed={depthMap}
+              className={`rounded px-2.5 py-1 text-xs font-medium ${
+                depthMap ? 'bg-sky-600 text-white' : 'text-gray-800 hover:bg-gray-100'
+              }`}
+            >
+              Depth
+            </button>
+          )}
           <button
             onClick={() => setView3d((v) => !v)}
             aria-pressed={view3d}
@@ -434,6 +459,7 @@ function MapView() {
           kind={mode.kind}
           at={mode.at}
           isAdmin={isAdmin}
+          defaultActivity={activities[0] ?? 'diving'}
           onCancel={() => setMode({ type: 'idle' })}
           onCreated={handleCreated}
         />

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { CERT_AGENCIES, CERT_LEVELS } from '@/lib/certs';
+import ActivityChips from '@/components/ActivityChips';
 
 const inputClass = 'w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900';
 const USERNAME_RE = /^[A-Za-z0-9_-]{3,30}$/;
@@ -11,7 +12,7 @@ const USERNAME_RE = /^[A-Za-z0-9_-]{3,30}$/;
 type Props = { onOpenAdmin?: () => void; onOpenProfile?: () => void; className?: string };
 
 export default function AuthBox({ onOpenAdmin, onOpenProfile, className }: Props) {
-  const { user, username, isAdmin, loading } = useAuth();
+  const { user, username, isAdmin, loading, activities, setActivities } = useAuth();
 
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -75,6 +76,7 @@ export default function AuthBox({ onOpenAdmin, onOpenProfile, className }: Props
               adult_confirmed: true,
               cert_level: certLevel || null,
               cert_agency: certAgency || null,
+              activities: activities.length ? activities : [],
             },
             emailRedirectTo: `${window.location.origin}/map`,
           },
@@ -179,8 +181,12 @@ export default function AuthBox({ onOpenAdmin, onOpenProfile, className }: Props
 
           {mode === 'signup' && (
             <>
+              <div>
+                <div className="mb-1 text-xs text-gray-600">What are you into? (optional)</div>
+                <ActivityChips value={activities} onChange={setActivities} showAll={false} compact />
+              </div>
               <select className={inputClass} value={certLevel} onChange={(e) => setCertLevel(e.target.value)}>
-                <option value="">Certification (optional)</option>
+                <option value="">Diving certification (optional)</option>
                 {CERT_LEVELS.map((l) => (
                   <option key={l.value} value={l.value}>
                     {l.label}
@@ -188,7 +194,7 @@ export default function AuthBox({ onOpenAdmin, onOpenProfile, className }: Props
                 ))}
               </select>
               <select className={inputClass} value={certAgency} onChange={(e) => setCertAgency(e.target.value)}>
-                <option value="">Agency (optional)</option>
+                <option value="">Diving agency (optional)</option>
                 {CERT_AGENCIES.map((a) => (
                   <option key={a} value={a}>
                     {a}

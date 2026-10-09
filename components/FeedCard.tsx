@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { FeedItem } from '@/lib/types';
 import { mediaThumbUrl, mediaUrl, formatDuration } from '@/lib/photos';
 import { certLabel } from '@/lib/certs';
+import { activityOf } from '@/lib/activities';
 
 type Props = {
   item: FeedItem;
@@ -219,7 +220,7 @@ export default function FeedCard({
         {item.caption && <p className="mt-1 line-clamp-3 text-sm drop-shadow">{item.caption}</p>}
         {item.spot_name && (
           <button onClick={onOpenSpot} className="mt-1.5 text-sm font-medium text-sky-200 hover:underline">
-            📍 {item.spot_name}
+            {activityOf(item.spot_activity).emoji} {item.spot_name}
           </button>
         )}
       </div>

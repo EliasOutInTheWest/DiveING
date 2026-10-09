@@ -3,20 +3,22 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { SCHOOL_COLUMNS, SPOT_COLUMNS, type LngLat, type School, type Spot } from '@/lib/types';
-import { FIELDS, buildPayload, inputClass, type Kind } from '@/lib/fields';
-import { countryName } from '@/lib/countries';
+import { buildPayload, fieldsFor, inputClass, optionLabel, type Kind } from '@/lib/fields';
+import { activityOf } from '@/lib/activities';
 
 type Props = {
   kind: Kind;
   at: LngLat;
   isAdmin: boolean;
+  defaultActivity: string; // preselected activity
   onCancel: () => void;
   onCreated: (kind: Kind, created: Spot | School) => void;
 };
 
-export default function CreatePanel({ kind, at, isAdmin, onCancel, onCreated }: Props) {
-  const fields = FIELDS[kind];
-  const [form, setForm] = useState<Record<string, string>>({});
+export default function CreatePanel({ kind, at, isAdmin, defaultActivity, onCancel, onCreated }: Props) {
+  const [form, setForm] = useState<Record<string, string>>({ activity: defaultActivity });
+  const fields = fieldsFor(kind, form.activity);
+  const activity = activityOf(form.activity);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -77,11 +79,10 @@ export default function CreatePanel({ kind, at, isAdmin, onCancel, onCreated }: 
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <span
-            className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium text-white ${
-              kind === 'spot' ? 'bg-sky-500' : 'bg-orange-500'
-            }`}
+            className="inline-block rounded-full px-2 py-0.5 text-xs font-medium text-white"
+            style={{ backgroundColor: kind === 'spot' ? activity.color : '#f97316' }}
           >
-            New {kind === 'spot' ? 'dive spot' : 'dive school'}
+            New {(kind === 'spot' ? activity.spot : activity.provider).toLowerCase()}
           </span>
           <p className="mt-2 text-xs text-gray-500">
             Location: {at[1].toFixed(5)}, {at[0].toFixed(5)}. Click the map again to move the pin.
@@ -119,7 +120,7 @@ export default function CreatePanel({ kind, at, isAdmin, onCancel, onCreated }: 
                 <option value="">—</option>
                 {f.options?.map((o) => (
                   <option key={o} value={o}>
-                    {f.key === 'country_code' ? countryName(o) : o}
+                    {optionLabel(f.key, o)}
                   </option>
                 ))}
               </select>

@@ -8,6 +8,7 @@ export type Spot = {
   level: string | null;
   best_season: string | null;
   country_code: string | null;
+  activity: string;
 };
 
 export type School = {
@@ -20,12 +21,13 @@ export type School = {
   phone: string | null;
   email: string | null;
   country_code: string | null;
+  activity: string;
 };
 
 export type Selection = { kind: 'spot' | 'school'; id: string };
 
-export const SPOT_COLUMNS = 'id,name,description,lat,lng,max_depth_m,level,best_season,country_code';
-export const SCHOOL_COLUMNS = 'id,name,description,lat,lng,website,phone,email,country_code';
+export const SPOT_COLUMNS = 'id,name,description,lat,lng,max_depth_m,level,best_season,country_code,activity';
+export const SCHOOL_COLUMNS = 'id,name,description,lat,lng,website,phone,email,country_code,activity';
 
 // [longitude, latitude]
 export type LngLat = [number, number];
@@ -65,6 +67,7 @@ export type FeedItem = {
   cert_level: string | null;
   spot_name: string | null;
   spot_country: string | null;
+  spot_activity: string | null;
   like_count: number;
   liked: boolean;
 };

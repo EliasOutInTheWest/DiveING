@@ -5,6 +5,7 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { BoatRoute, LngLat, Mode, School, Selection, Spot } from '@/lib/types';
 import { depthColorExpression } from '@/lib/depth';
+import { activityOf } from '@/lib/activities';
 
 // ---------------------------------------------------------------
 // Basemap switch. If the normal map ever stays plain/white,
@@ -187,8 +188,9 @@ export default function DiveMap({
       markers.push(marker);
     }
 
-    visibleSpots.forEach((s) => add('spot', s.id, s.lng, s.lat, '#0ea5e9')); // blue = dive spot
-    visibleSchools.forEach((s) => add('school', s.id, s.lng, s.lat, '#f97316')); // orange = dive school
+    // colour of a spot pin = its activity (blue diving, green hiking, ...), orange = school / provider
+    visibleSpots.forEach((s) => add('spot', s.id, s.lng, s.lat, activityOf(s.activity).color));
+    visibleSchools.forEach((s) => add('school', s.id, s.lng, s.lat, '#f97316'));
 
     return () => {
       markers.forEach((m) => m.remove());

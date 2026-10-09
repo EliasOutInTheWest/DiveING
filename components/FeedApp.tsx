@@ -12,6 +12,7 @@ import AuthBox from '@/components/AuthBox';
 import ProfilePanel from '@/components/ProfilePanel';
 import FeedCard from '@/components/FeedCard';
 import UploadPanel from '@/components/UploadPanel';
+import ActivityChips from '@/components/ActivityChips';
 
 type FeedMode = 'foryou' | 'newest';
 const PAGE_SIZE = 12;
@@ -28,7 +29,8 @@ export default function FeedApp() {
 
 function FeedView() {
   const router = useRouter();
-  const { user, isAdmin, isVerified, loading: authLoading } = useAuth();
+  const { user, isAdmin, isVerified, loading: authLoading, activities, setActivities } = useAuth();
+  const activitiesKey = activities.join(',');
   const uid = user?.id;
 
   const [mode, setMode] = useState<FeedMode>('foryou');
@@ -46,6 +48,10 @@ function FeedView() {
   const busy = useRef(false);
   const generation = useRef(0); // makes sure an old answer never overwrites a newer one
   const viewed = useRef(new Set<string>());
+  const activitiesRef = useRef<string[]>([]);
+  useEffect(() => {
+    activitiesRef.current = activities;
+  }, [activities]);
 
   useEffect(() => {
     itemsRef.current = items;
@@ -65,6 +71,7 @@ function FeedView() {
       p_mode: feedMode,
       p_limit: PAGE_SIZE,
       p_exclude: exclude,
+      p_activities: activitiesRef.current, // favourite activities, empty = all
     });
     if (myGeneration !== generation.current) return; // a newer request took over
 
@@ -72,7 +79,7 @@ function FeedView() {
       console.error('feed error:', err.message);
       setError(
         err.message.includes('get_feed')
-          ? 'The feed is not set up yet. Run videos-feed.sql in Supabase first.'
+          ? 'The feed is not set up yet. Run videos-feed.sql and then activities.sql in Supabase first.'
           : 'The feed could not be loaded.'
       );
     } else {
@@ -95,10 +102,11 @@ function FeedView() {
   }, []);
 
   // first load, and again when the tab or the logged-in user changes
+  // (also when the favourite activities change)
   useEffect(() => {
     if (authLoading) return;
     load(mode, true);
-  }, [mode, uid, authLoading, load]);
+  }, [mode, uid, authLoading, load, activitiesKey]);
 
   // near the end: load more
   useEffect(() => {
@@ -217,6 +225,11 @@ function FeedView() {
         </div>
       </div>
 
+      {/* favourite activities: the feed only shows these */}
+      <div className="absolute left-1/2 top-[6.25rem] z-20 max-w-[calc(100%-1.5rem)] -translate-x-1/2 sm:top-14">
+        <ActivityChips value={activities} onChange={setActivities} dark compact />
+      </div>
+
       <AuthBox className="absolute right-3 top-3 z-20" onOpenProfile={() => setProfileOpen(true)} />
 
       {/* ---------- the posts ---------- */}
@@ -247,7 +260,7 @@ function FeedView() {
             <div className="text-5xl">🌊</div>
             <h2 className="mt-3 text-xl font-semibold">You have seen everything for now</h2>
             <p className="mt-1 max-w-sm text-sm text-slate-300">
-              Post your own photo or video, or explore more dive spots on the map.
+              Post your own photo or video, or explore more spots on the map.
             </p>
             <div className="mt-5 flex gap-3">
               <button onClick={openPost} className="rounded-full bg-sky-500 px-5 py-2 font-medium hover:bg-sky-600">
@@ -280,7 +293,19 @@ function FeedView() {
             <>
               <div className="text-5xl">🤿</div>
               <h2 className="mt-3 text-xl font-semibold">No posts yet</h2>
-              <p className="mt-1 max-w-sm text-sm text-gray-300">Be the first to share a photo or video of a dive spot.</p>
+              <p className="mt-1 max-w-sm text-sm text-gray-300">
+                {activities.length > 0
+                  ? 'There are no posts for your chosen activities yet. Be the first, or look at all activities.'
+                  : 'Be the first to share a photo or video of a spot.'}
+              </p>
+              {activities.length > 0 && (
+                <button
+                  onClick={() => setActivities([])}
+                  className="mt-3 rounded-full border border-white/50 px-4 py-1.5 text-sm hover:bg-white/10"
+                >
+                  Show all activities
+                </button>
+              )}
               <button onClick={openPost} className="mt-4 rounded-full bg-sky-500 px-5 py-2 font-medium hover:bg-sky-600">
                 + Post
               </button>

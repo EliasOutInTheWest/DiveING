@@ -1,4 +1,5 @@
 import type { School, Spot } from '@/lib/types';
+import { matchesActivities } from '@/lib/activities';
 
 export type Filters = {
   levels: string[]; // 'beginner' | 'intermediate' | 'advanced' | 'unknown' (empty = all)
@@ -41,13 +42,16 @@ function countryOk(filter: string, code: string | null): boolean {
   return code === filter;
 }
 
-export function applyFilters(spots: Spot[], schools: School[], f: Filters, liked: Set<string>) {
+// activities = the favourite activities of the user (empty = all)
+export function applyFilters(spots: Spot[], schools: School[], f: Filters, liked: Set<string>, activities: string[]) {
   const depth = DEPTH_OPTIONS.find((d) => d.value === f.depth);
 
   const visibleSpots = spots.filter((s) => {
+    if (!matchesActivities(activities, s.activity)) return false;
     if (f.levels.length > 0 && !f.levels.includes(s.level ?? 'unknown')) return false;
     if (!countryOk(f.country, s.country_code)) return false;
-    if (depth && (depth.min !== null || depth.max !== null)) {
+    // the depth filter is only about dive spots, other activities have no depth
+    if (s.activity === 'diving' && depth && (depth.min !== null || depth.max !== null)) {
       if (s.max_depth_m == null) return false; // no depth data: hidden while a depth filter is on
       if (depth.min !== null && s.max_depth_m < depth.min) return false;
       if (depth.max !== null && s.max_depth_m > depth.max) return false;
@@ -56,7 +60,9 @@ export function applyFilters(spots: Spot[], schools: School[], f: Filters, liked
     return true;
   });
 
-  const visibleSchools = f.showSchools ? schools.filter((s) => countryOk(f.country, s.country_code)) : [];
+  const visibleSchools = f.showSchools
+    ? schools.filter((s) => matchesActivities(activities, s.activity) && countryOk(f.country, s.country_code))
+    : [];
 
   return { visibleSpots, visibleSchools };
 }

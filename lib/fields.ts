@@ -1,4 +1,5 @@
-import { COUNTRY_OPTIONS } from '@/lib/countries';
+import { COUNTRY_OPTIONS, countryName } from '@/lib/countries';
+import { ACTIVITY_VALUES, activityOf } from '@/lib/activities';
 
 export type Kind = 'spot' | 'school';
 
@@ -13,14 +14,16 @@ export type Field = {
 export const FIELDS: Record<Kind, Field[]> = {
   spot: [
     { key: 'name', label: 'Name', type: 'text', required: true },
+    { key: 'activity', label: 'Activity', type: 'select', options: ACTIVITY_VALUES, required: true },
     { key: 'description', label: 'Description', type: 'textarea' },
     { key: 'max_depth_m', label: 'Max depth (m)', type: 'number' },
-    { key: 'level', label: 'Level', type: 'select', options: ['beginner', 'intermediate', 'advanced'] },
+    { key: 'level', label: 'Level / difficulty', type: 'select', options: ['beginner', 'intermediate', 'advanced'] },
     { key: 'best_season', label: 'Best season', type: 'text' },
     { key: 'country_code', label: 'Country', type: 'select', options: COUNTRY_OPTIONS },
   ],
   school: [
     { key: 'name', label: 'Name', type: 'text', required: true },
+    { key: 'activity', label: 'Activity', type: 'select', options: ACTIVITY_VALUES, required: true },
     { key: 'description', label: 'Description', type: 'textarea' },
     { key: 'country_code', label: 'Country', type: 'select', options: COUNTRY_OPTIONS },
     { key: 'website', label: 'Website', type: 'text' },
@@ -28,6 +31,21 @@ export const FIELDS: Record<Kind, Field[]> = {
     { key: 'email', label: 'Email', type: 'text' },
   ],
 };
+
+// The fields that make sense for this activity (depth is only for diving)
+export function fieldsFor(kind: Kind, activity: string | null | undefined): Field[] {
+  return FIELDS[kind].filter((f) => f.key !== 'max_depth_m' || activity === 'diving');
+}
+
+// Text shown for an option of a select field
+export function optionLabel(key: string, option: string): string {
+  if (key === 'country_code') return countryName(option);
+  if (key === 'activity') {
+    const a = activityOf(option);
+    return `${a.emoji} ${a.label}`;
+  }
+  return option;
+}
 
 export const inputClass =
   'w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900';

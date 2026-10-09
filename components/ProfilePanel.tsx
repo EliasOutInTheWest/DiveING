@@ -6,6 +6,8 @@ import { useAuth } from '@/components/AuthProvider';
 import { CERT_AGENCIES, CERT_LEVELS, certLabel } from '@/lib/certs';
 import { countryName } from '@/lib/countries';
 import { mediaThumbUrl } from '@/lib/photos';
+import { activityOf } from '@/lib/activities';
+import ActivityChips from '@/components/ActivityChips';
 
 const USERNAME_RE = /^[A-Za-z0-9_-]{3,30}$/;
 const inputClass = 'w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900';
@@ -26,6 +28,7 @@ type LikedSpot = {
   level: string | null;
   max_depth_m: number | null;
   country_code: string | null;
+  activity: string | null;
 };
 type LikedPhoto = {
   id: string;
@@ -46,7 +49,7 @@ type Props = {
 };
 
 export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, onLikesChanged }: Props) {
-  const { user, isAdmin, refresh } = useAuth();
+  const { user, isAdmin, refresh, activities, setActivities } = useAuth();
   const uid = user?.id;
   const email = user?.email;
 
@@ -121,7 +124,7 @@ export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, on
     const [spotRes, photoRes] = await Promise.all([
       supabase
         .from('spot_likes')
-        .select('created_at,spots(id,name,level,max_depth_m,country_code)')
+        .select('created_at,spots(id,name,level,max_depth_m,country_code,activity)')
         .eq('user_id', uid)
         .order('created_at', { ascending: false }),
       supabase
@@ -270,6 +273,15 @@ export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, on
               </div>
             </div>
 
+            <div className="space-y-2">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">My activities</h3>
+              <ActivityChips value={activities} onChange={setActivities} />
+              <p className="text-xs text-gray-500">
+                The map and the feed only show these activities. Choose none (or &quot;All&quot;) to see
+                everything. Saved automatically.
+              </p>
+            </div>
+
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">Favourites</h3>
@@ -281,10 +293,10 @@ export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, on
               </div>
 
               <div>
-                <div className="text-sm font-medium">♥ Liked dive spots ({likedSpots.length})</div>
+                <div className="text-sm font-medium">♥ Liked spots ({likedSpots.length})</div>
                 {likedSpots.length === 0 ? (
                   <p className="mt-1 text-sm text-gray-400">
-                    No liked dive spots yet. Click the heart on a dive spot.
+                    No liked spots yet. Click the heart on a spot.
                   </p>
                 ) : (
                   <ul className="mt-1 divide-y divide-gray-100 rounded border border-gray-200 text-sm">
@@ -294,12 +306,12 @@ export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, on
                           onClick={() => onOpenSpot(s.id)}
                           className="min-w-0 truncate text-left font-medium text-sky-700 hover:underline"
                         >
-                          {s.name}
+                          {activityOf(s.activity).emoji} {s.name}
                         </button>
                         <span className="shrink-0 text-xs text-gray-500">
                           {[
                             s.level,
-                            s.max_depth_m != null ? `${s.max_depth_m} m` : null,
+                            s.activity === 'diving' && s.max_depth_m != null ? `${s.max_depth_m} m` : null,
                             s.country_code ? countryName(s.country_code) : null,
                           ]
                             .filter(Boolean)
@@ -331,7 +343,7 @@ export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, on
                       <button
                         key={p.id}
                         onClick={() => onOpenSpot(p.spot_id)}
-                        title="Open this dive spot"
+                        title="Open this spot"
                         className="relative aspect-square overflow-hidden rounded bg-gray-100"
                       >
                         {mediaThumbUrl(p) ? (
@@ -365,7 +377,7 @@ export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, on
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <label className="block text-sm">
-                  <span className="mb-1 block font-medium text-gray-700">Certification</span>
+                  <span className="mb-1 block font-medium text-gray-700">Diving certification</span>
                   <select className={inputClass} value={certLevel} onChange={(e) => setCertLevel(e.target.value)}>
                     <option value="">—</option>
                     {CERT_LEVELS.map((l) => (
@@ -376,7 +388,7 @@ export default function ProfilePanel({ onClose, onOpenSpot, onShowFavourites, on
                   </select>
                 </label>
                 <label className="block text-sm">
-                  <span className="mb-1 block font-medium text-gray-700">Agency</span>
+                  <span className="mb-1 block font-medium text-gray-700">Diving agency</span>
                   <select className={inputClass} value={certAgency} onChange={(e) => setCertAgency(e.target.value)}>
                     <option value="">—</option>
                     {CERT_AGENCIES.map((a) => (
