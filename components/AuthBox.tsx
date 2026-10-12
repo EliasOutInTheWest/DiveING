@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -9,9 +10,9 @@ import ActivityChips from '@/components/ActivityChips';
 const inputClass = 'w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900';
 const USERNAME_RE = /^[A-Za-z0-9_-]{3,30}$/;
 
-type Props = { onOpenAdmin?: () => void; onOpenProfile?: () => void; className?: string };
+type Props = { onOpenAdmin?: () => void; className?: string };
 
-export default function AuthBox({ onOpenAdmin, onOpenProfile, className }: Props) {
+export default function AuthBox({ onOpenAdmin, className }: Props) {
   const { user, username, isAdmin, loading, activities, setActivities } = useAuth();
 
   const [open, setOpen] = useState(false);
@@ -105,13 +106,19 @@ export default function AuthBox({ onOpenAdmin, onOpenProfile, className }: Props
     >
       {user ? (
         <div className="flex items-center gap-2">
-          <button
-            onClick={onOpenProfile}
+          <Link
+            href={username ? `/u/${username}` : '/settings'}
             title="My profile"
             className="max-w-40 truncate font-medium hover:underline"
           >
             {username ?? user.email}
-          </button>
+          </Link>
+          <Link href="/people" title="Find people" className="rounded border border-gray-300 px-2 py-0.5 hover:bg-gray-50">
+            People
+          </Link>
+          <Link href="/settings" title="Profile settings" aria-label="Settings" className="rounded border border-gray-300 px-2 py-0.5 hover:bg-gray-50">
+            ⚙
+          </Link>
           {isAdmin &&
             (onOpenAdmin ? (
               <button

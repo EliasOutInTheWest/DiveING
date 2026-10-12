@@ -1,14 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import type { CSSProperties } from 'react';
-import { Bricolage_Grotesque, DM_Sans } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
 import { ACTIVITIES } from '@/lib/activities';
-import { rings } from '@/lib/contours';
-import LandingHeroMap from '@/components/LandingHeroMap';
-
-const display = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
-const body = DM_Sans({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'DiveING – your adventure map',
@@ -33,304 +26,244 @@ async function getCounts() {
 
 const FEATURES = [
   {
-    title: 'An adventure map you can filter',
-    text: 'Browse dive spots, hiking spots, campsites and more, with level, season and country on every pin.',
+    icon: '🗺️',
+    title: 'Interactive adventure map',
+    text: 'Browse dive spots, hiking spots, campsites and more, with details like level, season and country.',
   },
   {
+    icon: '🎯',
     title: 'Only what you love',
-    text: 'Choose your favourite activities once. The map and the feed then show only those.',
+    text: 'Choose your favourite activities, for example diving and hiking. The map and the feed then show only those.',
   },
   {
+    icon: '⛵',
     title: 'Boat routes',
-    text: 'See how long the boat ride from a dive school to a spot takes and which way it goes.',
+    text: 'For diving: see how long the boat ride from a dive school to a spot takes and which way it goes.',
   },
   {
-    title: 'Depth view and 3D',
-    text: 'Switch on the depth map, or tilt the map to see the shape of the sea floor and the mountains.',
+    icon: '🌊',
+    title: 'Depth map and 3D',
+    text: 'Switch on the depth view, or tilt the map to see the shape of the sea floor and the mountains.',
   },
   {
-    title: 'Honest reviews',
-    text: 'Read what other people experienced and share your own rating.',
+    icon: '⭐',
+    title: 'Ratings and reviews',
+    text: 'Read honest reviews from other people and share your own experience.',
   },
   {
+    icon: '📷',
     title: 'Photos and videos',
-    text: 'Look at a spot before you go, and add your own pictures afterwards.',
+    text: 'Look at photos and short videos of a spot before you go, and add your own afterwards.',
   },
   {
-    title: 'A feed made for you',
-    text: 'Swipe through community posts that fit your activities and the spots you like.',
+    icon: '🎬',
+    title: 'Reels-style feed',
+    text: 'Swipe through photos and videos from the community. The feed shows you posts that fit your activities and the spots you like.',
   },
   {
+    icon: '♥',
     title: 'Likes and favourites',
     text: 'Like spots, photos and videos, and find them again in your profile.',
   },
 ];
 
 const STEPS = [
-  { title: 'Pick your activities', text: 'Diving, hiking, camping, biking, climbing or paddling. Choose any mix.' },
-  { title: 'Explore the map', text: 'Find spots, schools and guides near you or where you will travel, and read reviews.' },
-  { title: 'Join in', text: 'Create a free account, add spots, upload photos and videos and rate your trips.' },
+  { title: 'Pick your activities', text: 'Choose what you are into: diving, hiking, camping, biking, climbing or paddling.' },
+  { title: 'Explore the map', text: 'Find spots, schools and guides near you or where you will travel to, and read reviews.' },
+  { title: 'Join the community', text: 'Create a free account, add spots, upload photos and videos and rate your adventures.' },
 ];
-
-const INK = '#0a2a33';
-const PAPER = '#f1f5f2';
-const FLAG = '#ff5b2e';
-
-const fontDisplay: CSSProperties = { fontFamily: 'var(--font-display), system-ui, sans-serif' };
-const fontBody: CSSProperties = { fontFamily: 'var(--font-body), system-ui, sans-serif' };
-
-// Decorative contour lines used behind dark sections
-function Contours({ cx, cy, seed, className }: { cx: number; cy: number; seed: number; className?: string }) {
-  const lines = rings(cx, cy, 14, 30, 34, seed);
-  return (
-    <svg className={className} viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <g fill="none" stroke="currentColor" strokeWidth="1.2">
-        {lines.map((d, i) => (
-          <path key={i} d={d} />
-        ))}
-      </g>
-    </svg>
-  );
-}
-
-const fmt = (n: number) => n.toLocaleString('en-US');
 
 export default async function Landing() {
   const counts = await getCounts();
 
   return (
-    <div
-      className={`${display.variable} ${body.variable} min-h-screen text-[#12303a]`}
-      style={{ ...fontBody, backgroundColor: PAPER }}
-    >
-      <style>{`
-        .hero-pulse { transform-box: fill-box; transform-origin: center; animation: heroPulse 2s ease-out infinite; }
-        @keyframes heroPulse { from { opacity: .45; transform: scale(.7); } to { opacity: 0; transform: scale(1.6); } }
-        .drift { animation: drift 40s ease-in-out infinite alternate; }
-        @keyframes drift { from { transform: translate3d(0,0,0) scale(1.02); } to { transform: translate3d(-16px,10px,0) scale(1.06); } }
-        @media (prefers-reduced-motion: reduce) { .hero-pulse, .drift { animation: none; } }
-      `}</style>
-
+    <div className="min-h-screen bg-white text-slate-900">
       {/* ---------- hero ---------- */}
-      <section className="relative overflow-hidden px-5 pb-20 pt-5 text-white sm:px-8 sm:pb-28" style={{ backgroundColor: INK }}>
-        <Contours cx={900} cy={260} seed={2} className="drift pointer-events-none absolute inset-0 h-full w-full text-[#7fd0dd]/[0.13]" />
+      <section
+        className="relative overflow-hidden px-6 pb-32 pt-6 text-white"
+        style={{ background: 'linear-gradient(to bottom, #082f49, #075985 55%, #0284c7)' }}
+      >
+        <div className="pointer-events-none absolute -right-20 top-24 h-72 w-72 rounded-full bg-white/5" />
+        <div className="pointer-events-none absolute left-10 top-64 h-40 w-40 rounded-full bg-white/5" />
+        <div className="pointer-events-none absolute right-1/3 top-96 h-24 w-24 rounded-full bg-white/5" />
 
-        <nav className="relative mx-auto flex max-w-6xl items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5" style={fontDisplay}>
-            <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-              <circle cx="14" cy="14" r="13" fill="none" stroke="#f1f5f2" strokeWidth="1.5" />
-              <circle cx="14" cy="14" r="8" fill="none" stroke="#7fd0dd" strokeWidth="1.5" />
-              <circle cx="14" cy="14" r="3.5" fill={FLAG} />
-            </svg>
-            <span className="text-xl font-bold tracking-tight">DiveING</span>
-          </Link>
-          <div className="flex items-center gap-6 text-sm">
-            <a href="#features" className="hidden text-[#cfe4e3] hover:text-white sm:inline">
+        <nav className="relative mx-auto flex max-w-5xl items-center justify-between">
+          <span className="text-xl font-bold tracking-tight">🧭 DiveING</span>
+          <div className="flex items-center gap-5 text-sm">
+            <a href="#features" className="hidden text-sky-100 hover:text-white sm:inline">
               Features
             </a>
-            <a href="#how" className="hidden text-[#cfe4e3] hover:text-white sm:inline">
+            <a href="#how" className="hidden text-sky-100 hover:text-white sm:inline">
               How it works
             </a>
-            <a href="#schools" className="hidden text-[#cfe4e3] hover:text-white md:inline">
+            <a href="#schools" className="hidden text-sky-100 hover:text-white sm:inline">
               For schools and guides
             </a>
-            <Link href="/feed" className="text-[#cfe4e3] hover:text-white">
+            <Link href="/feed" className="text-sky-100 hover:text-white">
               Feed
             </Link>
             <Link
               href="/map"
-              className="rounded-full bg-white px-4 py-2 font-semibold text-[#0a2a33] transition hover:bg-[#dff1ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5b2e]"
+              className="rounded-full bg-white px-4 py-1.5 font-medium text-sky-900 hover:bg-sky-50"
             >
               Open map
             </Link>
           </div>
         </nav>
 
-        <div className="relative mx-auto mt-14 grid max-w-6xl items-center gap-12 lg:mt-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-          <div>
-            <h1
-              className="text-5xl font-bold leading-[0.98] tracking-[-0.03em] sm:text-7xl"
-              style={fontDisplay}
+        <div className="relative mx-auto mt-20 max-w-5xl">
+          <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
+            Find your next adventure.
+          </h1>
+          <p className="mt-5 max-w-xl text-lg text-sky-100">
+            DiveING is a map for diving, hiking, camping, biking and more. Discover spots, find
+            schools and guides, and share photos, videos and reviews with the community.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/map"
+              className="rounded-full bg-white px-6 py-3 font-semibold text-sky-900 shadow hover:bg-sky-50"
             >
-              Find your next adventure.
-            </h1>
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-[#cfe4e3]">
-              A map for diving, hiking, camping, biking, climbing and paddling. Discover spots, find schools and
-              guides, and share photos, videos and reviews with the community.
-            </p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <Link
-                href="/map"
-                className="rounded-full px-7 py-3.5 font-semibold text-white transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a2a33]"
-                style={{ backgroundColor: FLAG }}
-              >
-                Open the map
-              </Link>
-              <Link
-                href="/feed"
-                className="rounded-full border border-white/35 px-7 py-3.5 font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              >
-                Watch the feed
-              </Link>
-            </div>
-            {counts && (
-              <p className="mt-10 max-w-md text-sm leading-relaxed text-[#9fc3c4]">
-                Already on the map: <span className="font-semibold text-white">{fmt(counts.spots)}</span> spots,{' '}
-                <span className="font-semibold text-white">{fmt(counts.schools)}</span> schools and guides and{' '}
-                <span className="font-semibold text-white">{fmt(counts.photos)}</span> photos and videos from the
-                community.
-              </p>
-            )}
+              Open the map →
+            </Link>
+            <Link
+              href="/feed"
+              className="rounded-full border border-white/60 px-6 py-3 font-semibold text-white hover:bg-white/10"
+            >
+              Watch the feed
+            </Link>
           </div>
-
-          <LandingHeroMap />
         </div>
+
+        <svg
+          className="absolute inset-x-0 bottom-0 h-16 w-full text-white"
+          viewBox="0 0 1440 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path fill="currentColor" d="M0,40 C240,100 480,0 720,40 C960,80 1200,10 1440,50 L1440,100 L0,100 Z" />
+        </svg>
       </section>
 
+      {/* ---------- live numbers ---------- */}
+      {counts && (
+        <section className="relative z-10 mx-auto -mt-20 max-w-3xl px-6">
+          <div className="grid grid-cols-3 gap-3 rounded-2xl bg-white p-5 text-center shadow-lg ring-1 ring-slate-100">
+            <div>
+              <div className="text-3xl font-bold text-sky-700">{counts.spots}</div>
+              <div className="text-sm text-slate-500">spots</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-orange-500">{counts.schools}</div>
+              <div className="text-sm text-slate-500">schools and guides</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-sky-700">{counts.photos}</div>
+              <div className="text-sm text-slate-500">photos and videos</div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ---------- activities ---------- */}
-      <section className="mx-auto max-w-6xl px-5 pt-20 sm:px-8 sm:pt-28">
-        <div className="max-w-xl">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={fontDisplay}>
-            Choose your adventures
-          </h2>
-          <p className="mt-3 text-lg leading-relaxed text-[#3d5c64]">
-            Six activities, one map. Tap one to open the map with only those spots.
-          </p>
-        </div>
-        <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <section className="mx-auto max-w-5xl px-6 pt-20">
+        <h2 className="text-center text-3xl font-bold tracking-tight">Choose your adventures</h2>
+        <p className="mx-auto mt-3 max-w-xl text-center text-slate-600">
+          Pick your favourites once. The map and the feed then show only what you love.
+        </p>
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {ACTIVITIES.map((a) => (
             <Link
               key={a.value}
               href={`/map?activity=${a.value}`}
-              style={{ '--c': a.color } as CSSProperties}
-              className="group relative overflow-hidden rounded-2xl bg-white p-5 ring-1 ring-[#0a2a33]/10 transition hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--c)_9%,white)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c)]"
+              className="rounded-xl border-2 p-4 text-center transition hover:shadow-md"
+              style={{ borderColor: a.color }}
             >
-              <span className="absolute inset-x-0 top-0 h-1.5" style={{ backgroundColor: a.color }} aria-hidden="true" />
-              <div className="mt-2 text-4xl transition group-hover:scale-110" aria-hidden="true">
-                {a.emoji}
-              </div>
-              <div className="mt-5 text-lg font-semibold leading-tight" style={fontDisplay}>
-                {a.label}
-              </div>
-              <div className="mt-0.5 text-sm text-[#5b7a80]">{a.spot}s</div>
+              <div className="text-4xl">{a.emoji}</div>
+              <div className="mt-2 font-semibold">{a.label}</div>
+              <div className="mt-0.5 text-xs text-slate-500">{a.spot}s</div>
             </Link>
           ))}
         </div>
       </section>
 
       {/* ---------- features ---------- */}
-      <section id="features" className="mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
-        <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-          <div className="lg:sticky lg:top-10 lg:self-start">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={fontDisplay}>
-              Everything for your next trip
-            </h2>
-            <p className="mt-3 text-lg leading-relaxed text-[#3d5c64]">
-              Where to go, who to go with and what others experienced, all in one place.
-            </p>
-            <Link
-              href="/map"
-              className="mt-7 inline-block rounded-full bg-[#0a2a33] px-6 py-3 font-semibold text-white transition hover:bg-[#0f3b47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5b2e] focus-visible:ring-offset-2"
-            >
-              Try the map
-            </Link>
-          </div>
-          <dl className="grid gap-x-12 gap-y-8 sm:grid-cols-2">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="border-t border-[#0a2a33]/15 pt-5">
-                <dt className="text-xl font-semibold leading-snug" style={fontDisplay}>
-                  {f.title}
-                </dt>
-                <dd className="mt-2 leading-relaxed text-[#3d5c64]">{f.text}</dd>
-              </div>
-            ))}
-          </dl>
+      <section id="features" className="mx-auto max-w-5xl px-6 py-20">
+        <h2 className="text-center text-3xl font-bold tracking-tight">Everything for your next trip</h2>
+        <p className="mx-auto mt-3 max-w-xl text-center text-slate-600">
+          One place to find where to go, who to go with and what others experienced.
+        </p>
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {FEATURES.map((f) => (
+            <div key={f.title} className="rounded-xl border border-slate-200 p-5">
+              <div className="text-3xl">{f.icon}</div>
+              <h3 className="mt-3 text-lg font-semibold">{f.title}</h3>
+              <p className="mt-1 text-sm text-slate-600">{f.text}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ---------- how it works ---------- */}
-      <section id="how" className="bg-[#dff1ee] px-5 py-20 sm:px-8 sm:py-24">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={fontDisplay}>
-            How it works
-          </h2>
-          <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-0">
+      <section id="how" className="bg-slate-50 px-6 py-20">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-center text-3xl font-bold tracking-tight">How it works</h2>
+          <div className="mt-10 grid gap-6 sm:grid-cols-3">
             {STEPS.map((s, i) => (
-              <li key={s.title} className="relative md:pr-10">
-                {i < STEPS.length - 1 && (
-                  <span
-                    className="absolute left-14 right-4 top-6 hidden border-t-2 border-dashed border-[#0a2a33]/25 md:block"
-                    aria-hidden="true"
-                  />
-                )}
-                <div
-                  className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#0a2a33] text-xl font-bold text-white"
-                  style={fontDisplay}
-                >
+              <div key={s.title} className="text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sky-700 text-xl font-bold text-white">
                   {i + 1}
                 </div>
-                <h3 className="mt-5 text-xl font-semibold" style={fontDisplay}>
-                  {s.title}
-                </h3>
-                <p className="mt-2 max-w-xs leading-relaxed text-[#3d5c64]">{s.text}</p>
-              </li>
+                <h3 className="mt-4 text-lg font-semibold">{s.title}</h3>
+                <p className="mt-1 text-sm text-slate-600">{s.text}</p>
+              </div>
             ))}
-          </ol>
+          </div>
         </div>
       </section>
 
-      {/* ---------- schools and providers ---------- */}
-      <section id="schools" className="px-5 py-20 sm:px-8 sm:py-28">
-        <div
-          className="relative mx-auto max-w-6xl overflow-hidden rounded-[32px] p-8 text-white sm:p-14"
-          style={{ backgroundColor: INK }}
-        >
-          <Contours cx={980} cy={420} seed={6} className="pointer-events-none absolute inset-0 h-full w-full text-[#bfe8c9]/[0.14]" />
-          <div className="relative max-w-2xl">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={fontDisplay}>
-              Are you a school, guide or provider?
-            </h2>
-            <p className="mt-4 text-lg leading-relaxed text-[#cfe4e3]">
-              Put your dive school, guiding business, campground, bike shop or rental on the map and keep your
-              details up to date. Dive schools can also draw boat routes to their dive spots. Create an account on
-              the map and ask an admin to link your page to it.
-            </p>
-            <Link
-              href="/map"
-              className="mt-8 inline-block rounded-full px-7 py-3.5 font-semibold text-white transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              style={{ backgroundColor: FLAG }}
-            >
-              Go to the map
-            </Link>
-          </div>
+      {/* ---------- dive schools ---------- */}
+      <section id="schools" className="mx-auto max-w-5xl px-6 py-20">
+        <div className="rounded-2xl bg-sky-50 p-8 sm:p-12">
+          <h2 className="text-3xl font-bold tracking-tight">Are you a school, guide or provider?</h2>
+          <p className="mt-3 max-w-2xl text-slate-700">
+            Show your dive school, guiding business, campground, bike shop or rental on the map and
+            keep your details up to date. Dive schools can also draw boat routes to their dive
+            spots. Create an account on the map and ask an admin to link your page to it.
+          </p>
+          <Link
+            href="/map"
+            className="mt-6 inline-block rounded-full bg-sky-700 px-6 py-3 font-semibold text-white hover:bg-sky-800"
+          >
+            Go to the map
+          </Link>
         </div>
       </section>
 
       {/* ---------- safety note ---------- */}
-      <section className="mx-auto max-w-3xl px-5 pb-20 sm:px-8">
-        <p className="rounded-2xl border border-amber-300/70 bg-amber-50 p-5 text-sm leading-relaxed text-amber-950">
-          <strong>Please note:</strong> The information on DiveING is provided by the community and meant for
-          orientation only. It does not replace a briefing by a certified dive professional, a mountain guide or local
-          authorities. Check weather, conditions and your own skills before you go. The depth map uses coarse global
-          data and is not suitable for dive planning or navigation.
+      <section className="mx-auto max-w-3xl px-6 pb-16">
+        <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <strong>Please note:</strong> The information on DiveING is provided by the community and
+          meant for orientation only. It does not replace a briefing by a certified dive
+          professional, a mountain guide or local authorities. Check weather, conditions and your
+          own skills before you go. The depth map uses coarse global data and is not suitable for
+          dive planning or navigation.
         </p>
       </section>
 
       {/* ---------- footer ---------- */}
-      <footer className="px-5 py-12 text-sm text-[#cfe4e3] sm:px-8" style={{ backgroundColor: INK }}>
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+      <footer className="bg-slate-900 px-6 py-10 text-sm text-slate-300">
+        <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="text-lg font-bold text-white" style={fontDisplay}>
-              DiveING
-            </div>
-            <p className="mt-1 text-[#9fc3c4]">A student project for people who love the outdoors.</p>
+            <div className="text-lg font-bold text-white">🧭 DiveING</div>
+            <p className="mt-1 text-slate-400">A student project for people who love the outdoors.</p>
           </div>
-          <div className="max-w-md text-xs leading-relaxed text-[#9fc3c4]">
-            Map data © OpenStreetMap contributors, map tiles by OpenFreeMap / OpenMapTiles. Depth data: GEBCO / ETOPO1
-            via Mapzen Terrain Tiles.
+          <div className="max-w-md text-xs leading-relaxed text-slate-400">
+            Map data © OpenStreetMap contributors, map tiles by OpenFreeMap / OpenMapTiles. Depth
+            data: GEBCO / ETOPO1 via Mapzen Terrain Tiles.
           </div>
-          <Link href="/map" className="font-semibold text-white hover:underline">
-            Open the map
+          <Link href="/map" className="font-medium text-white hover:underline">
+            Open the map →
           </Link>
         </div>
       </footer>

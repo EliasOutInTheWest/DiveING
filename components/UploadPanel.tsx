@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { fetchAll } from '@/lib/fetchAll';
 import { useAuth } from '@/components/AuthProvider';
 import { useDirtyFlag } from '@/components/DirtyContext';
 import { ACCEPT_MEDIA, MAX_VIDEO_SECONDS, isVideoFile, uploadMedia } from '@/lib/upload';
@@ -31,8 +31,9 @@ export default function UploadPanel({ onClose, onUploaded }: Props) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from('spots').select('id,name,country_code,activity').order('name');
-      if (!cancelled) setSpots((data as SpotOption[] | null) ?? []);
+      const { data } = await fetchAll<SpotOption>('spots', 'id,name,country_code,activity');
+      data.sort((x, y) => x.name.localeCompare(y.name));
+      if (!cancelled) setSpots(data);
     })();
     return () => {
       cancelled = true;

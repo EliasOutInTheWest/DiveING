@@ -11,9 +11,7 @@ const LEVELS = [
   { value: 'unknown', label: 'Not set' },
 ];
 
-const selectClass =
-  'w-full rounded-xl border border-[#0a2a33]/15 bg-white px-3 py-2 text-sm text-[#12303a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5b2e]';
-const labelClass = 'mb-1.5 block text-xs font-semibold text-[#5b7a80]';
+const selectClass = 'w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900';
 
 type Props = {
   filters: Filters;
@@ -48,9 +46,9 @@ export default function FilterPanel({
   const sortedCountries = [...countryCodes].sort((a, b) => countryName(a).localeCompare(countryName(b)));
 
   return (
-    <div className="absolute left-0 top-full z-20 mt-2 w-80 space-y-4 rounded-2xl bg-white p-4 text-sm text-[#12303a] shadow-xl ring-1 ring-[#0a2a33]/10">
+    <div className="absolute left-0 top-full mt-2 w-72 space-y-3 rounded bg-white p-3 text-sm text-gray-900 shadow-lg">
       <div>
-        <div className={labelClass}>Level / difficulty</div>
+        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">Level / difficulty</div>
         <div className="flex flex-wrap gap-1.5">
           {LEVELS.map((l) => {
             const on = filters.levels.includes(l.value);
@@ -59,10 +57,10 @@ export default function FilterPanel({
                 key={l.value}
                 onClick={() => toggleLevel(l.value)}
                 aria-pressed={on}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5b2e] ${
+                className={`rounded-full border px-2.5 py-0.5 text-xs ${
                   on
-                    ? 'border-[#0a2a33] bg-[#0a2a33] text-white'
-                    : 'border-[#0a2a33]/15 text-[#12303a] hover:border-[#0a2a33]/40'
+                    ? 'border-sky-600 bg-sky-600 text-white'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 {l.label}
@@ -73,7 +71,7 @@ export default function FilterPanel({
       </div>
 
       <label className="block">
-        <span className={labelClass}>Country</span>
+        <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Country</span>
         <select
           className={selectClass}
           value={filters.country}
@@ -91,7 +89,7 @@ export default function FilterPanel({
 
       {showDepth && (
         <label className="block">
-          <span className={labelClass}>Depth (dive spots)</span>
+          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Depth (dive spots)</span>
           <select
             className={selectClass}
             value={filters.depth}
@@ -104,7 +102,7 @@ export default function FilterPanel({
             ))}
           </select>
           {filters.depth !== 'any' && (
-            <span className="mt-1.5 block text-xs text-[#5b7a80]">
+            <span className="mt-1 block text-xs text-gray-500">
               Spots without depth data are hidden while a depth filter is on.
             </span>
           )}
@@ -115,7 +113,6 @@ export default function FilterPanel({
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
-            className="h-4 w-4 accent-[#ff5b2e]"
             checked={filters.favouritesOnly}
             disabled={!loggedIn}
             onChange={(e) => onChange({ ...filters, favouritesOnly: e.target.checked })}
@@ -126,7 +123,6 @@ export default function FilterPanel({
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
-            className="h-4 w-4 accent-[#ff5b2e]"
             checked={filters.showSchools}
             onChange={(e) => onChange({ ...filters, showSchools: e.target.checked })}
           />
@@ -134,13 +130,13 @@ export default function FilterPanel({
         </label>
       </div>
 
-      <div className="flex items-center justify-between border-t border-[#0a2a33]/10 pt-3">
-        <span className="text-xs text-[#5b7a80]">
+      <div className="flex items-center justify-between border-t border-gray-100 pt-2">
+        <span className="text-xs text-gray-600">
           Showing {shown} of {total} spots
         </span>
         <button
           onClick={() => onChange(DEFAULT_FILTERS)}
-          className="text-xs font-semibold text-[#ff5b2e] hover:underline"
+          className="text-xs font-medium text-sky-700 hover:underline"
         >
           Reset
         </button>

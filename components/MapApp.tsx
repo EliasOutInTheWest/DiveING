@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { fetchAll } from '@/lib/fetchAll';
 import {
   SCHOOL_COLUMNS,
   SPOT_COLUMNS,
@@ -19,7 +20,6 @@ import SidePanel from '@/components/SidePanel';
 import CreatePanel from '@/components/CreatePanel';
 import AuthBox from '@/components/AuthBox';
 import AdminPanel from '@/components/AdminPanel';
-import ProfilePanel from '@/components/ProfilePanel';
 import FilterPanel from '@/components/FilterPanel';
 import { DEFAULT_FILTERS, activeFilterCount, applyFilters, type Filters } from '@/lib/filters';
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
@@ -46,7 +46,6 @@ function MapView() {
   const [schools, setSchools] = useState<School[]>([]);
   const [selected, setSelected] = useState<Selection | null>(null);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
   const [mode, setMode] = useState<Mode>({ type: 'idle' });
   const [routes, setRoutes] = useState<BoatRoute[]>([]);
   const [routesVersion, setRoutesVersion] = useState(0);
@@ -65,13 +64,13 @@ function MapView() {
   useEffect(() => {
     async function load() {
       const [spotsRes, schoolsRes] = await Promise.all([
-        supabase.from('spots').select(SPOT_COLUMNS),
-        supabase.from('schools').select(SCHOOL_COLUMNS),
+        fetchAll<Spot>('spots', SPOT_COLUMNS),
+        fetchAll<School>('schools', SCHOOL_COLUMNS),
       ]);
-      if (spotsRes.error) console.error('spots error:', spotsRes.error.message);
-      if (schoolsRes.error) console.error('schools error:', schoolsRes.error.message);
-      setSpots((spotsRes.data as Spot[]) ?? []);
-      setSchools((schoolsRes.data as School[]) ?? []);
+      if (spotsRes.error) console.error('spots error:', spotsRes.error);
+      if (schoolsRes.error) console.error('schools error:', schoolsRes.error);
+      setSpots(spotsRes.data);
+      setSchools(schoolsRes.data);
     }
     load();
   }, []);
@@ -434,24 +433,8 @@ function MapView() {
         </div>
       </div>
 
-      <AuthBox onOpenAdmin={() => setAdminOpen(true)} onOpenProfile={() => setProfileOpen(true)} />
+      <AuthBox onOpenAdmin={() => setAdminOpen(true)} />
       {isAdmin && adminOpen && <AdminPanel onClose={() => setAdminOpen(false)} />}
-      {user && profileOpen && (
-        <ProfilePanel
-          onClose={() => setProfileOpen(false)}
-          onOpenSpot={(id) => {
-            setProfileOpen(false);
-            setMode({ type: 'idle' });
-            setSelected({ kind: 'spot', id });
-          }}
-          onShowFavourites={() => {
-            setProfileOpen(false);
-            setFilters((f) => ({ ...f, favouritesOnly: true }));
-            setFiltersOpen(true);
-          }}
-          onLikesChanged={() => setLikesVersion((v) => v + 1)}
-        />
-      )}
 
       {mode.type === 'place' && mode.at && (
         <CreatePanel

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import type { FeedItem } from '@/lib/types';
 import { mediaThumbUrl, mediaUrl, formatDuration } from '@/lib/photos';
@@ -25,7 +26,7 @@ type Props = {
 };
 
 const railButton =
-  'flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-xl text-white ring-1 ring-white/25 backdrop-blur-md transition hover:bg-white/25 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-60';
+  'flex h-11 w-11 items-center justify-center rounded-full bg-black/45 text-xl text-white backdrop-blur hover:bg-black/65 disabled:opacity-60';
 
 export default function FeedCard({
   item,
@@ -158,13 +159,13 @@ export default function FeedCard({
 
       {/* heart when double-clicking */}
       {burst && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-8xl text-[#ff5b2e] drop-shadow-lg">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-8xl text-red-500 drop-shadow-lg">
           ♥
         </div>
       )}
 
       {/* shade behind the text */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/75 to-transparent" />
 
       {/* ---------- right side buttons ---------- */}
       <div className="absolute bottom-24 right-3 z-10 flex flex-col items-center gap-3">
@@ -174,7 +175,7 @@ export default function FeedCard({
             disabled={!canInteract}
             title={canInteract ? (item.liked ? 'Remove like' : 'Like') : 'Log in and confirm your email to like'}
             aria-pressed={item.liked}
-            className={`${railButton} ${item.liked ? '!bg-[#ff5b2e] !ring-[#ff5b2e]' : ''}`}
+            className={`${railButton} ${item.liked ? '!bg-red-500' : ''}`}
           >
             {item.liked ? '♥' : '♡'}
           </button>
@@ -207,9 +208,15 @@ export default function FeedCard({
       {/* ---------- text at the bottom ---------- */}
       <div className="absolute bottom-6 left-4 right-20 z-10 text-white">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-semibold drop-shadow">@{item.username ?? 'unknown'}</span>
+          {item.username ? (
+            <Link href={`/u/${item.username}`} className="font-semibold drop-shadow hover:underline">
+              @{item.username}
+            </Link>
+          ) : (
+            <span className="font-semibold drop-shadow">@unknown</span>
+          )}
           {item.cert_level && (
-            <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] ring-1 ring-white/20 backdrop-blur-md">
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px] backdrop-blur">
               {certLabel(item.cert_level)}
             </span>
           )}
@@ -219,26 +226,16 @@ export default function FeedCard({
         </div>
         {item.caption && <p className="mt-1 line-clamp-3 text-sm drop-shadow">{item.caption}</p>}
         {item.spot_name && (
-          <button
-            onClick={onOpenSpot}
-            className="mt-2.5 inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 text-sm font-medium ring-1 ring-white/25 backdrop-blur-md transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-          >
-            <span
-              className="flex h-5 w-5 items-center justify-center rounded-full text-[11px]"
-              style={{ backgroundColor: activityOf(item.spot_activity).color }}
-              aria-hidden="true"
-            >
-              {activityOf(item.spot_activity).emoji}
-            </span>
-            {item.spot_name}
+          <button onClick={onOpenSpot} className="mt-1.5 text-sm font-medium text-sky-200 hover:underline">
+            {activityOf(item.spot_activity).emoji} {item.spot_name}
           </button>
         )}
       </div>
 
       {/* ---------- video progress ---------- */}
       {isVideo && (
-        <div className="absolute inset-x-0 bottom-0 z-10 h-1 bg-white/20">
-          <div className="h-full" style={{ width: `${progress * 100}%`, backgroundColor: activityOf(item.spot_activity).color }} />
+        <div className="absolute inset-x-0 bottom-0 z-10 h-1 bg-white/25">
+          <div className="h-full bg-white" style={{ width: `${progress * 100}%` }} />
         </div>
       )}
     </section>

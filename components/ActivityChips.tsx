@@ -18,13 +18,10 @@ export default function ActivityChips({ value, onChange, showAll = true, dark = 
     onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
   }
 
-  const size = compact ? 'px-2.5 py-1 text-xs' : 'px-3.5 py-1.5 text-sm';
+  const size = compact ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm';
   const idle = dark
-    ? 'border-white/25 bg-white/10 text-white backdrop-blur-md hover:bg-white/20'
-    : 'border-[#0a2a33]/15 bg-white text-[#12303a] hover:border-[#0a2a33]/40';
-  const focus =
-    'transition duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5b2e] focus-visible:ring-offset-1';
-  const allOn = dark ? 'border-white bg-white text-[#0a2a33]' : 'border-[#0a2a33] bg-[#0a2a33] text-white';
+    ? 'border-white/40 bg-black/40 text-white hover:bg-black/60'
+    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50';
 
   return (
     <div className={`flex flex-wrap gap-1.5 ${className ?? ''}`} role="group" aria-label="Activities">
@@ -33,7 +30,9 @@ export default function ActivityChips({ value, onChange, showAll = true, dark = 
           type="button"
           onClick={() => onChange([])}
           aria-pressed={value.length === 0}
-          className={`rounded-full border font-medium ${focus} ${size} ${value.length === 0 ? allOn : idle}`}
+          className={`rounded-full border font-medium ${size} ${
+            value.length === 0 ? 'border-slate-800 bg-slate-800 text-white' : idle
+          }`}
         >
           All
         </button>
@@ -47,7 +46,7 @@ export default function ActivityChips({ value, onChange, showAll = true, dark = 
             onClick={() => toggle(a.value)}
             aria-pressed={on}
             title={a.label}
-            className={`rounded-full border font-medium ${focus} ${size} ${on ? 'text-white shadow-sm' : idle}`}
+            className={`rounded-full border font-medium ${size} ${on ? 'text-white' : idle}`}
             style={on ? { backgroundColor: a.color, borderColor: a.color } : undefined}
           >
             <span aria-hidden="true">{a.emoji}</span>

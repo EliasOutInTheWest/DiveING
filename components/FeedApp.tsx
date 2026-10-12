@@ -9,7 +9,6 @@ import { removeMediaFiles } from '@/lib/photos';
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
 import { DirtyProvider } from '@/components/DirtyContext';
 import AuthBox from '@/components/AuthBox';
-import ProfilePanel from '@/components/ProfilePanel';
 import FeedCard from '@/components/FeedCard';
 import UploadPanel from '@/components/UploadPanel';
 import ActivityChips from '@/components/ActivityChips';
@@ -41,7 +40,6 @@ function FeedView() {
   const [error, setError] = useState('');
   const [muted, setMuted] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef<FeedItem[]>([]);
@@ -118,7 +116,7 @@ function FeedView() {
   // arrow keys
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (uploadOpen || profileOpen) return;
+      if (uploadOpen) return;
       const target = e.target as HTMLElement | null;
       if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
@@ -129,7 +127,7 @@ function FeedView() {
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [uploadOpen, profileOpen]);
+  }, [uploadOpen]);
 
   const handleVisible = useCallback((index: number) => setActive(index), []);
 
@@ -230,7 +228,7 @@ function FeedView() {
         <ActivityChips value={activities} onChange={setActivities} dark compact />
       </div>
 
-      <AuthBox className="absolute right-3 top-3 z-20" onOpenProfile={() => setProfileOpen(true)} />
+      <AuthBox className="absolute right-3 top-3 z-20" />
 
       {/* ---------- the posts ---------- */}
       <div ref={scrollerRef} className="h-dvh snap-y snap-mandatory overflow-y-scroll overscroll-contain">
@@ -325,14 +323,6 @@ function FeedView() {
         />
       )}
 
-      {user && profileOpen && (
-        <ProfilePanel
-          onClose={() => setProfileOpen(false)}
-          onOpenSpot={(id) => router.push(`/map?spot=${id}`)}
-          onShowFavourites={() => router.push('/map?favourites=1')}
-          onLikesChanged={() => {}}
-        />
-      )}
     </div>
   );
 }
