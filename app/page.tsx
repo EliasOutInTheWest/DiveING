@@ -1,270 +1,297 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { Bricolage_Grotesque } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
 import { ACTIVITIES } from '@/lib/activities';
+import '@/components/landing/landing.css';
+import LandingNav from '@/components/landing/LandingNav';
+import Hero from '@/components/landing/Hero';
+import Worlds from '@/components/landing/Worlds';
+import MapDemo from '@/components/landing/MapDemo';
+import PhoneDemo from '@/components/landing/PhoneDemo';
+import Contours from '@/components/landing/Contours';
+import CountUp from '@/components/landing/CountUp';
+import Reveal from '@/components/landing/Reveal';
+import ScrollFx from '@/components/landing/ScrollFx';
+import DepthGauge from '@/components/landing/DepthGauge';
+
+const display = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-lp', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'DiveING – your adventure map',
   description:
-    'Discover dive spots, hiking spots, campsites and bike spots, find guides and schools, and share photos and videos with the community.',
+    'One map for diving, hiking, camping, biking, climbing and paddling. Find spots, schools and guides, and share photos and videos with the community.',
 };
+
+// the numbers are refreshed every few minutes, not on every visit
+export const revalidate = 300;
 
 // Live numbers for the start page (the page still works if this fails)
 async function getCounts() {
   try {
-    const [spots, schools, photos] = await Promise.all([
+    const [spots, schools, media] = await Promise.all([
       supabase.from('spots').select('id', { count: 'exact', head: true }),
       supabase.from('schools').select('id', { count: 'exact', head: true }),
       supabase.from('media').select('id', { count: 'exact', head: true }),
     ]);
     if (spots.error || schools.error) return null;
-    return { spots: spots.count ?? 0, schools: schools.count ?? 0, photos: photos.count ?? 0 };
+    return { spots: spots.count ?? 0, schools: schools.count ?? 0, media: media.count ?? 0 };
   } catch {
     return null;
   }
 }
 
-const FEATURES = [
-  {
-    icon: '🗺️',
-    title: 'Interactive adventure map',
-    text: 'Browse dive spots, hiking spots, campsites and more, with details like level, season and country.',
-  },
-  {
-    icon: '🎯',
-    title: 'Only what you love',
-    text: 'Choose your favourite activities, for example diving and hiking. The map and the feed then show only those.',
-  },
-  {
-    icon: '⛵',
-    title: 'Boat routes',
-    text: 'For diving: see how long the boat ride from a dive school to a spot takes and which way it goes.',
-  },
-  {
-    icon: '🌊',
-    title: 'Depth map and 3D',
-    text: 'Switch on the depth view, or tilt the map to see the shape of the sea floor and the mountains.',
-  },
-  {
-    icon: '⭐',
-    title: 'Ratings and reviews',
-    text: 'Read honest reviews from other people and share your own experience.',
-  },
-  {
-    icon: '📷',
-    title: 'Photos and videos',
-    text: 'Look at photos and short videos of a spot before you go, and add your own afterwards.',
-  },
-  {
-    icon: '🎬',
-    title: 'Reels-style feed',
-    text: 'Swipe through photos and videos from the community. The feed shows you posts that fit your activities and the spots you like.',
-  },
-  {
-    icon: '♥',
-    title: 'Likes and favourites',
-    text: 'Like spots, photos and videos, and find them again in your profile.',
-  },
+const FEED_POINTS = [
+  'Swipe through photos and videos, one after the other.',
+  'Posts that match your favourite activities come first.',
+  'Tap the pin to see the spot on the map, tap the heart to keep it.',
 ];
 
-const STEPS = [
-  { title: 'Pick your activities', text: 'Choose what you are into: diving, hiking, camping, biking, climbing or paddling.' },
-  { title: 'Explore the map', text: 'Find spots, schools and guides near you or where you will travel to, and read reviews.' },
-  { title: 'Join the community', text: 'Create a free account, add spots, upload photos and videos and rate your adventures.' },
-];
+function Marquee() {
+  const half = (
+    <div className="lp-marquee-half" style={{ display: 'flex' }}>
+      {ACTIVITIES.flatMap((a) => [
+        <span key={a.value + '-spot'} className="lp-marquee-item">
+          <b aria-hidden="true">{a.emoji}</b>
+          {a.label}
+        </span>,
+        <span key={a.value + '-provider'} className="lp-marquee-item">
+          <b aria-hidden="true">✦</b>
+          {a.spot}s
+        </span>,
+      ])}
+    </div>
+  );
+  return (
+    <div className="lp-marquee" aria-hidden="true">
+      <div className="lp-marquee-track">
+        {half}
+        {half}
+      </div>
+    </div>
+  );
+}
 
 export default async function Landing() {
   const counts = await getCounts();
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      {/* ---------- hero ---------- */}
-      <section
-        className="relative overflow-hidden px-6 pb-32 pt-6 text-white"
-        style={{ background: 'linear-gradient(to bottom, #082f49, #075985 55%, #0284c7)' }}
-      >
-        <div className="pointer-events-none absolute -right-20 top-24 h-72 w-72 rounded-full bg-white/5" />
-        <div className="pointer-events-none absolute left-10 top-64 h-40 w-40 rounded-full bg-white/5" />
-        <div className="pointer-events-none absolute right-1/3 top-96 h-24 w-24 rounded-full bg-white/5" />
+    <div className={`lp-page ${display.variable}`}>
+      {/* the page stays readable when scripts are blocked */}
+      <noscript>
+        <style>{`.lp-reveal,.lp-h1-row,.lp-lede,.lp-cta-row,.lp-blurb,.lp-cue,.lp-svg,.lp-stars,.lp-hpin{opacity:1!important;translate:none!important;filter:none!important}`}</style>
+      </noscript>
+      <div className="lp-progress" aria-hidden="true" />
+      <ScrollFx />
+      <DepthGauge />
+      <LandingNav />
 
-        <nav className="relative mx-auto flex max-w-5xl items-center justify-between">
-          <span className="text-xl font-bold tracking-tight">🧭 DiveING</span>
-          <div className="flex items-center gap-5 text-sm">
-            <a href="#features" className="hidden text-sky-100 hover:text-white sm:inline">
-              Features
-            </a>
-            <a href="#how" className="hidden text-sky-100 hover:text-white sm:inline">
-              How it works
-            </a>
-            <a href="#schools" className="hidden text-sky-100 hover:text-white sm:inline">
-              For schools and guides
-            </a>
-            <Link href="/feed" className="text-sky-100 hover:text-white">
-              Feed
-            </Link>
-            <Link
-              href="/map"
-              className="rounded-full bg-white px-4 py-1.5 font-medium text-sky-900 hover:bg-sky-50"
-            >
-              Open map
-            </Link>
+      <main>
+        <Hero />
+        <Marquee />
+
+        {/* ---------- six worlds ---------- */}
+        <section id="worlds" className="lp-section lp-dark">
+          <div className="lp-wrap">
+            <Reveal className="lp-section-head">
+              <h2 className="lp-display lp-h2">Six worlds. One map.</h2>
+              <p className="lp-lead">
+                From a kelp forest to a granite wall. Open a world to see what you can find in it.
+              </p>
+            </Reveal>
+            <Reveal delay={150}>
+              <Worlds />
+            </Reveal>
           </div>
-        </nav>
+        </section>
 
-        <div className="relative mx-auto mt-20 max-w-5xl">
-          <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
-            Find your next adventure.
-          </h1>
-          <p className="mt-5 max-w-xl text-lg text-sky-100">
-            DiveING is a map for diving, hiking, camping, biking and more. Discover spots, find
-            schools and guides, and share photos, videos and reviews with the community.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/map"
-              className="rounded-full bg-white px-6 py-3 font-semibold text-sky-900 shadow hover:bg-sky-50"
-            >
-              Open the map →
-            </Link>
-            <Link
-              href="/feed"
-              className="rounded-full border border-white/60 px-6 py-3 font-semibold text-white hover:bg-white/10"
-            >
-              Watch the feed
-            </Link>
+        {/* ---------- map ---------- */}
+        <section id="map" className="lp-section lp-light">
+          <div className="lp-wrap">
+            <Reveal>
+              <MapDemo />
+            </Reveal>
           </div>
-        </div>
+        </section>
 
-        <svg
-          className="absolute inset-x-0 bottom-0 h-16 w-full text-white"
-          viewBox="0 0 1440 100"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <path fill="currentColor" d="M0,40 C240,100 480,0 720,40 C960,80 1200,10 1440,50 L1440,100 L0,100 Z" />
-        </svg>
-      </section>
+        {/* ---------- feed ---------- */}
+        <section id="feed" className="lp-section lp-night">
+          <div className="lp-wrap lp-feed">
+            <Reveal>
+              <h2 className="lp-display lp-h2">See it before you go.</h2>
+              <p className="lp-lead">
+                A feed made of real photos and short videos from the people who were there, filtered to the
+                adventures you picked.
+              </p>
+              <ul className="lp-feed-list">
+                {FEED_POINTS.map((t) => (
+                  <li key={t}>
+                    <span aria-hidden="true">✓</span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/feed" className="lp-btn lp-btn-light">
+                Open the feed
+              </Link>
+            </Reveal>
+            <Reveal delay={200}>
+              <div className="lp-phone-stage">
+                <span className="lp-chip lp-chip-1" aria-hidden="true">
+                  ♥ 342
+                </span>
+                <span className="lp-chip lp-chip-2" aria-hidden="true">
+                  📍 Summit Trail
+                </span>
+                <span className="lp-chip lp-chip-3" aria-hidden="true">
+                  ▶ 0:42
+                </span>
+                <PhoneDemo />
+              </div>
+            </Reveal>
+          </div>
+        </section>
 
-      {/* ---------- live numbers ---------- */}
-      {counts && (
-        <section className="relative z-10 mx-auto -mt-20 max-w-3xl px-6">
-          <div className="grid grid-cols-3 gap-3 rounded-2xl bg-white p-5 text-center shadow-lg ring-1 ring-slate-100">
-            <div>
-              <div className="text-3xl font-bold text-sky-700">{counts.spots}</div>
-              <div className="text-sm text-slate-500">spots</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-orange-500">{counts.schools}</div>
-              <div className="text-sm text-slate-500">schools and guides</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-sky-700">{counts.photos}</div>
-              <div className="text-sm text-slate-500">photos and videos</div>
+        {/* ---------- what else is inside ---------- */}
+        <section className="lp-section lp-light">
+          <div className="lp-wrap">
+            <Reveal className="lp-section-head">
+              <h2 className="lp-display lp-h2">Everything for the trip.</h2>
+              <p className="lp-lead">The small things that make planning easier.</p>
+            </Reveal>
+            <div className="lp-facts">
+              <Reveal delay={0}>
+                <article className="lp-fact">
+                  <div className="lp-ico lp-ico-route" aria-hidden="true">
+                    <svg viewBox="0 0 200 108">
+                      <path d="M24 80 C 70 10, 120 100, 180 30" fill="none" stroke="#0369a1" strokeWidth="3" strokeLinecap="round" />
+                      <circle cx="24" cy="80" r="6" fill="#f97316" stroke="#fff" strokeWidth="2.5" />
+                      <circle cx="180" cy="30" r="6" fill="#0ea5e9" stroke="#fff" strokeWidth="2.5" />
+                    </svg>
+                    <span className="lp-ico-dot">🚤</span>
+                  </div>
+                  <h3 className="lp-display">Boat routes</h3>
+                  <p>See how long the boat ride from a dive school to a spot takes, and which way it goes.</p>
+                </article>
+              </Reveal>
+              <Reveal delay={120}>
+                <article className="lp-fact">
+                  <div className="lp-ico lp-ico-depth" aria-hidden="true">
+                    <svg viewBox="0 0 200 108" preserveAspectRatio="none">
+                      <path d="M0 40 Q30 28 60 40 T120 40 T180 40 T240 40 T300 40 V108 H0Z" fill="rgba(255,255,255,0.16)" />
+                      <path d="M0 62 Q30 50 60 62 T120 62 T180 62 T240 62 T300 62 V108 H0Z" fill="rgba(255,255,255,0.14)" />
+                      <path d="M0 84 Q30 72 60 84 T120 84 T180 84 T240 84 T300 84 V108 H0Z" fill="rgba(0,0,0,0.25)" />
+                    </svg>
+                  </div>
+                  <h3 className="lp-display">Depth map and 3D</h3>
+                  <p>Switch on the depth view, or tilt the map to see the shape of the sea floor and the mountains.</p>
+                </article>
+              </Reveal>
+              <Reveal delay={240}>
+                <article className="lp-fact">
+                  <div className="lp-ico lp-ico-stars" aria-hidden="true">
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <span key={i} className="lp-star" style={{ ['--i' as string]: i }}>
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                  <h3 className="lp-display">Honest reviews</h3>
+                  <p>Read what other people experienced, and add your own rating after you go.</p>
+                </article>
+              </Reveal>
+              <Reveal delay={360}>
+                <article className="lp-fact">
+                  <div className="lp-ico lp-ico-like" aria-hidden="true">
+                    <span>♥</span>
+                  </div>
+                  <h3 className="lp-display">Favourites and people</h3>
+                  <p>Keep the spots you like, follow other adventurers and see their posts on their profile.</p>
+                </article>
+              </Reveal>
             </div>
           </div>
         </section>
-      )}
 
-      {/* ---------- activities ---------- */}
-      <section className="mx-auto max-w-5xl px-6 pt-20">
-        <h2 className="text-center text-3xl font-bold tracking-tight">Choose your adventures</h2>
-        <p className="mx-auto mt-3 max-w-xl text-center text-slate-600">
-          Pick your favourites once. The map and the feed then show only what you love.
-        </p>
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {ACTIVITIES.map((a) => (
-            <Link
-              key={a.value}
-              href={`/map?activity=${a.value}`}
-              className="rounded-xl border-2 p-4 text-center transition hover:shadow-md"
-              style={{ borderColor: a.color }}
-            >
-              <div className="text-4xl">{a.emoji}</div>
-              <div className="mt-2 font-semibold">{a.label}</div>
-              <div className="mt-0.5 text-xs text-slate-500">{a.spot}s</div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------- features ---------- */}
-      <section id="features" className="mx-auto max-w-5xl px-6 py-20">
-        <h2 className="text-center text-3xl font-bold tracking-tight">Everything for your next trip</h2>
-        <p className="mx-auto mt-3 max-w-xl text-center text-slate-600">
-          One place to find where to go, who to go with and what others experienced.
-        </p>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="rounded-xl border border-slate-200 p-5">
-              <div className="text-3xl">{f.icon}</div>
-              <h3 className="mt-3 text-lg font-semibold">{f.title}</h3>
-              <p className="mt-1 text-sm text-slate-600">{f.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------- how it works ---------- */}
-      <section id="how" className="bg-slate-50 px-6 py-20">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="text-center text-3xl font-bold tracking-tight">How it works</h2>
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            {STEPS.map((s, i) => (
-              <div key={s.title} className="text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sky-700 text-xl font-bold text-white">
-                  {i + 1}
-                </div>
-                <h3 className="mt-4 text-lg font-semibold">{s.title}</h3>
-                <p className="mt-1 text-sm text-slate-600">{s.text}</p>
+        {/* ---------- live numbers ---------- */}
+        {counts && (counts.spots > 0 || counts.schools > 0) && (
+          <section className="lp-section lp-dark" aria-label="DiveING in numbers">
+            <div className="lp-wrap">
+              <div className="lp-stats">
+                <Reveal delay={0}>
+                  <span className="lp-stat-num">
+                    <CountUp value={counts.spots} />
+                  </span>
+                  <span className="lp-stat-label">spots on the map</span>
+                </Reveal>
+                <Reveal delay={150}>
+                  <span className="lp-stat-num">
+                    <CountUp value={counts.schools} />
+                  </span>
+                  <span className="lp-stat-label">schools, shops and guides</span>
+                </Reveal>
+                <Reveal delay={300}>
+                  <span className="lp-stat-num">
+                    <CountUp value={counts.media} />
+                  </span>
+                  <span className="lp-stat-label">photos and videos</span>
+                </Reveal>
               </div>
-            ))}
+            </div>
+          </section>
+        )}
+
+        {/* ---------- for businesses ---------- */}
+        <section id="schools" className="lp-section lp-cta">
+          <Contours className="lp-contours" seed={3} rings={17} />
+          <div className="lp-wrap">
+            <Reveal className="lp-cta-box">
+              <h2 className="lp-display lp-h2">Run a dive school or an outdoor shop?</h2>
+              <p className="lp-lead">
+                Get found by people who are already looking at the map. Add your business, keep your details up to
+                date and let your guests leave reviews.
+              </p>
+              <div style={{ marginTop: 28, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                <Link href="/map" className="lp-btn lp-btn-light">
+                  Add your business
+                </Link>
+                <Link href="/people" className="lp-btn lp-btn-ghost">
+                  Find people
+                </Link>
+              </div>
+              <p className="lp-safety">
+                Diving and other outdoor activities carry risk. DiveING helps you plan, it does not replace training,
+                local knowledge or the weather forecast. Spots on the map can be wrong or out of date, so check
+                before you go.
+              </p>
+            </Reveal>
           </div>
-        </div>
-      </section>
-
-      {/* ---------- dive schools ---------- */}
-      <section id="schools" className="mx-auto max-w-5xl px-6 py-20">
-        <div className="rounded-2xl bg-sky-50 p-8 sm:p-12">
-          <h2 className="text-3xl font-bold tracking-tight">Are you a school, guide or provider?</h2>
-          <p className="mt-3 max-w-2xl text-slate-700">
-            Show your dive school, guiding business, campground, bike shop or rental on the map and
-            keep your details up to date. Dive schools can also draw boat routes to their dive
-            spots. Create an account on the map and ask an admin to link your page to it.
-          </p>
-          <Link
-            href="/map"
-            className="mt-6 inline-block rounded-full bg-sky-700 px-6 py-3 font-semibold text-white hover:bg-sky-800"
-          >
-            Go to the map
-          </Link>
-        </div>
-      </section>
-
-      {/* ---------- safety note ---------- */}
-      <section className="mx-auto max-w-3xl px-6 pb-16">
-        <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <strong>Please note:</strong> The information on DiveING is provided by the community and
-          meant for orientation only. It does not replace a briefing by a certified dive
-          professional, a mountain guide or local authorities. Check weather, conditions and your
-          own skills before you go. The depth map uses coarse global data and is not suitable for
-          dive planning or navigation.
-        </p>
-      </section>
+        </section>
+      </main>
 
       {/* ---------- footer ---------- */}
-      <footer className="bg-slate-900 px-6 py-10 text-sm text-slate-300">
-        <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="text-lg font-bold text-white">🧭 DiveING</div>
-            <p className="mt-1 text-slate-400">A student project for people who love the outdoors.</p>
-          </div>
-          <div className="max-w-md text-xs leading-relaxed text-slate-400">
-            Map data © OpenStreetMap contributors, map tiles by OpenFreeMap / OpenMapTiles. Depth
-            data: GEBCO / ETOPO1 via Mapzen Terrain Tiles.
-          </div>
-          <Link href="/map" className="font-medium text-white hover:underline">
-            Open the map →
-          </Link>
+      <footer className="lp-footer">
+        <div className="lp-wrap">
+          <ul className="lp-footer-links">
+            <li>
+              <Link href="/map">Map</Link>
+            </li>
+            <li>
+              <Link href="/feed">Feed</Link>
+            </li>
+            <li>
+              <Link href="/people">People</Link>
+            </li>
+            <li>
+              <Link href="/settings">Settings</Link>
+            </li>
+          </ul>
+          <small>
+            Map data © OpenStreetMap contributors. Base map by OpenFreeMap and OpenMapTiles. Depth data from GEBCO.
+          </small>
+          <span className="lp-wordmark lp-display" aria-hidden="true">
+            DiveING
+          </span>
         </div>
       </footer>
     </div>
