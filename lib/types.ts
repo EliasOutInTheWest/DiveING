@@ -22,12 +22,13 @@ export type School = {
   email: string | null;
   country_code: string | null;
   activity: string;
+  provider_type: string; // school | rental | shop | tours
 };
 
 export type Selection = { kind: 'spot' | 'school'; id: string };
 
 export const SPOT_COLUMNS = 'id,name,description,lat,lng,max_depth_m,level,best_season,country_code,activity';
-export const SCHOOL_COLUMNS = 'id,name,description,lat,lng,website,phone,email,country_code,activity';
+export const SCHOOL_COLUMNS = 'id,name,description,lat,lng,website,phone,email,country_code,activity,provider_type';
 
 // [longitude, latitude]
 export type LngLat = [number, number];

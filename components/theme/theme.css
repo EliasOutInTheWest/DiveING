@@ -406,3 +406,53 @@
 .dv .bg-white\/95 {
   background: rgba(7, 24, 38, 0.96);
 }
+
+/* ---------- map pins: teardrop with an emoji ---------- */
+.dv-pin {
+  position: relative;
+  width: 44px;
+  height: 52px;
+  cursor: pointer;
+  transition: scale 0.2s cubic-bezier(0.3, 1.6, 0.5, 1), opacity 0.2s;
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.4));
+}
+.dv-pin:hover {
+  scale: 1.18;
+  transform-origin: 50% 100%;
+}
+.dv-pin-body {
+  position: absolute;
+  left: 5px;
+  top: 3px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50% 50% 50% 0;
+  rotate: -45deg;
+  background: var(--c, #0ea5e9);
+  box-shadow: inset 0 0 0 2.5px rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dv-pin-emoji {
+  rotate: 45deg;
+  font-size: 18px;
+  line-height: 1;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+.dv-pin-badge {
+  position: absolute;
+  right: -3px;
+  top: -3px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1.5px rgba(5, 24, 32, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}

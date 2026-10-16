@@ -347,7 +347,7 @@ function MapView() {
                 onClick={() => startPlace('school')}
                 className="rounded bg-orange-500 px-3 py-1 font-medium text-white hover:bg-orange-600"
               >
-                + Add school / provider
+                + Add school, rental or shop
               </button>
             )}
             {!canAddSpot && <span className="text-gray-500">Log in to add spots</span>}
@@ -369,7 +369,7 @@ function MapView() {
             <span>
               {mode.at
                 ? 'Click the map to move the pin'
-                : `Click on the map to place the new ${mode.kind === 'spot' ? 'spot' : 'school / provider'}`}
+                : `Click on the map to place the new ${mode.kind === 'spot' ? 'spot' : 'school, rental or shop'}`}
             </span>
             <button
               onClick={() => setMode({ type: 'idle' })}

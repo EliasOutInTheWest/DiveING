@@ -15,6 +15,7 @@ import {
 } from '@/lib/types';
 import { buildPayload, fieldsFor, inputClass, optionLabel, type Field, type Kind } from '@/lib/fields';
 import { activityOf } from '@/lib/activities';
+import { providerName, providerTypeOf } from '@/lib/providers';
 import { lengthKm } from '@/lib/geo';
 import { countryName } from '@/lib/countries';
 import PhotoSection from '@/components/PhotoSection';
@@ -28,6 +29,7 @@ function renderValue(f: Field, v: string | number | null) {
   if (v == null || v === '') return <span className="text-gray-400">—</span>;
   if (f.key === 'country_code') return countryName(String(v));
   if (f.key === 'activity') return optionLabel('activity', String(v));
+  if (f.key === 'provider_type') return optionLabel('provider_type', String(v));
   if (f.key === 'max_depth_m') return `${v} m`;
   if (f.key === 'website') {
     const url = String(v);
@@ -212,7 +214,9 @@ export default function SidePanel({
             className="inline-block rounded-full px-2 py-0.5 text-xs font-medium text-white"
             style={{ backgroundColor: kind === 'spot' ? activity.color : '#f97316' }}
           >
-            {activity.emoji} {kind === 'spot' ? activity.spot : activity.provider}
+            {kind === 'spot'
+              ? `${activity.emoji} ${activity.spot}`
+              : `${providerTypeOf((item as School).provider_type).emoji} ${providerName(item.activity, (item as School).provider_type)}`}
           </span>
           {!editing && (
             <h2 className="mt-2 text-xl font-semibold">{drawing ? `Boat route from ${item.name}` : item.name}</h2>
@@ -417,7 +421,7 @@ export default function SidePanel({
         // ---------- read ----------
         <div className="space-y-4">
           {fields
-            .filter((f) => f.key !== 'name' && f.key !== 'activity')
+            .filter((f) => f.key !== 'name' && f.key !== 'activity' && f.key !== 'provider_type')
             .map((f) => (
               <div key={f.key}>
                 <div className="text-xs font-medium uppercase tracking-wide text-gray-500">{f.label}</div>

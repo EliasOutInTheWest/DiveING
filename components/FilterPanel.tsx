@@ -2,6 +2,7 @@
 
 import { DEFAULT_FILTERS, DEPTH_OPTIONS, type Filters } from '@/lib/filters';
 import { countryName } from '@/lib/countries';
+import { PROVIDER_TYPES } from '@/lib/providers';
 
 // difficulty works for every activity
 const LEVELS = [
@@ -126,8 +127,34 @@ export default function FilterPanel({
             checked={filters.showSchools}
             onChange={(e) => onChange({ ...filters, showSchools: e.target.checked })}
           />
-          <span>Show schools and providers</span>
+          <span>Show schools, rentals and shops</span>
         </label>
+        {filters.showSchools && (
+          <div className="flex flex-wrap gap-1.5 pl-6">
+            {PROVIDER_TYPES.map((t) => {
+              const on = filters.providerTypes.includes(t.value);
+              return (
+                <button
+                  key={t.value}
+                  onClick={() =>
+                    onChange({
+                      ...filters,
+                      providerTypes: on
+                        ? filters.providerTypes.filter((x) => x !== t.value)
+                        : [...filters.providerTypes, t.value],
+                    })
+                  }
+                  aria-pressed={on}
+                  className={`rounded-full border px-2.5 py-0.5 text-xs ${
+                    on ? 'border-sky-600 bg-sky-50 text-sky-800' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {t.emoji} {t.noun.charAt(0).toUpperCase() + t.noun.slice(1)}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between border-t border-gray-100 pt-2">

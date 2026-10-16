@@ -8,6 +8,7 @@ import { depthColorExpression } from '@/lib/depth';
 import { activityOf } from '@/lib/activities';
 import { applyMapTheme } from '@/lib/mapTheme';
 import { startFish } from '@/lib/fish';
+import { providerTypeOf } from '@/lib/providers';
 
 // ---------------------------------------------------------------
 // Basemap switch. If the normal map ever stays plain/white,
@@ -201,9 +202,29 @@ export default function DiveMap({
 
     const markers: maplibregl.Marker[] = [];
 
-    function add(kind: 'spot' | 'school', id: string, lng: number, lat: number, color: string) {
-      const marker = new maplibregl.Marker({ color }).setLngLat([lng, lat]).addTo(map!);
-      const el = marker.getElement();
+    // teardrop pin with an emoji in it; schools / shops get a small activity badge
+    function pin(color: string, emoji: string, badge?: string): HTMLElement {
+      const el = document.createElement('div');
+      el.className = 'dv-pin';
+      const body = document.createElement('div');
+      body.className = 'dv-pin-body';
+      body.style.setProperty('--c', color);
+      const icon = document.createElement('span');
+      icon.className = 'dv-pin-emoji';
+      icon.textContent = emoji;
+      body.appendChild(icon);
+      el.appendChild(body);
+      if (badge) {
+        const b = document.createElement('span');
+        b.className = 'dv-pin-badge';
+        b.textContent = badge;
+        el.appendChild(b);
+      }
+      return el;
+    }
+
+    function add(kind: 'spot' | 'school', id: string, lng: number, lat: number, el: HTMLElement) {
+      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map!);
       el.style.cursor = 'pointer';
       el.style.transition = 'opacity 200ms';
       markerEls.current.set(`${kind}:${id}`, el);
@@ -215,9 +236,15 @@ export default function DiveMap({
       markers.push(marker);
     }
 
-    // colour of a spot pin = its activity (blue diving, green hiking, ...), orange = school / provider
-    visibleSpots.forEach((s) => add('spot', s.id, s.lng, s.lat, activityOf(s.activity).color));
-    visibleSchools.forEach((s) => add('school', s.id, s.lng, s.lat, '#f97316'));
+    // spot pin: colour + emoji of its activity (blue diver, green boot, ...)
+    // school / rental / shop pin: orange, emoji of its type, small badge with the activity
+    visibleSpots.forEach((s) => {
+      const a = activityOf(s.activity);
+      add('spot', s.id, s.lng, s.lat, pin(a.color, a.emoji));
+    });
+    visibleSchools.forEach((s) =>
+      add('school', s.id, s.lng, s.lat, pin('#f97316', providerTypeOf(s.provider_type).emoji, activityOf(s.activity).emoji))
+    );
 
     return () => {
       markers.forEach((m) => m.remove());
@@ -232,12 +259,8 @@ export default function DiveMap({
       const isSelected = k === key;
       el.style.opacity = key && !isSelected ? '0.3' : '1';
       el.style.zIndex = isSelected ? '5' : '';
-      const svg = el.querySelector('svg');
-      if (svg) {
-        svg.style.transition = 'transform 150ms';
-        svg.style.transformOrigin = '50% 100%';
-        svg.style.transform = isSelected ? 'scale(1.3)' : '';
-      }
+      el.style.transformOrigin = '50% 100%';
+      el.style.scale = isSelected ? '1.3' : '';
     });
   }, [selected, visibleSpots, visibleSchools]);
 

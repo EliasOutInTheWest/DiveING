@@ -1,5 +1,6 @@
 import { COUNTRY_OPTIONS, countryName } from '@/lib/countries';
 import { ACTIVITY_VALUES, activityOf } from '@/lib/activities';
+import { PROVIDER_VALUES, providerTypeOf } from '@/lib/providers';
 
 export type Kind = 'spot' | 'school';
 
@@ -24,6 +25,7 @@ export const FIELDS: Record<Kind, Field[]> = {
   school: [
     { key: 'name', label: 'Name', type: 'text', required: true },
     { key: 'activity', label: 'Activity', type: 'select', options: ACTIVITY_VALUES, required: true },
+    { key: 'provider_type', label: 'Type', type: 'select', options: PROVIDER_VALUES, required: true },
     { key: 'description', label: 'Description', type: 'textarea' },
     { key: 'country_code', label: 'Country', type: 'select', options: COUNTRY_OPTIONS },
     { key: 'website', label: 'Website', type: 'text' },
@@ -43,6 +45,10 @@ export function optionLabel(key: string, option: string): string {
   if (key === 'activity') {
     const a = activityOf(option);
     return `${a.emoji} ${a.label}`;
+  }
+  if (key === 'provider_type') {
+    const t = providerTypeOf(option);
+    return `${t.emoji} ${t.label}`;
   }
   return option;
 }

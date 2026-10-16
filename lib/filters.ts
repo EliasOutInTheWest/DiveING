@@ -7,6 +7,7 @@ export type Filters = {
   depth: string; // see DEPTH_OPTIONS
   favouritesOnly: boolean;
   showSchools: boolean;
+  providerTypes: string[]; // 'school' | 'rental' | 'shop' | 'tours' (empty = all)
 };
 
 export const DEFAULT_FILTERS: Filters = {
@@ -15,6 +16,7 @@ export const DEFAULT_FILTERS: Filters = {
   depth: 'any',
   favouritesOnly: false,
   showSchools: true,
+  providerTypes: [],
 };
 
 export const DEPTH_OPTIONS: { value: string; label: string; min: number | null; max: number | null }[] = [
@@ -32,7 +34,8 @@ export function activeFilterCount(f: Filters): number {
     (f.country ? 1 : 0) +
     (f.depth !== 'any' ? 1 : 0) +
     (f.favouritesOnly ? 1 : 0) +
-    (f.showSchools ? 0 : 1)
+    (f.showSchools ? 0 : 1) +
+    (f.providerTypes.length > 0 ? 1 : 0)
   );
 }
 
@@ -61,7 +64,12 @@ export function applyFilters(spots: Spot[], schools: School[], f: Filters, liked
   });
 
   const visibleSchools = f.showSchools
-    ? schools.filter((s) => matchesActivities(activities, s.activity) && countryOk(f.country, s.country_code))
+    ? schools.filter(
+        (s) =>
+          matchesActivities(activities, s.activity) &&
+          countryOk(f.country, s.country_code) &&
+          (f.providerTypes.length === 0 || f.providerTypes.includes(s.provider_type ?? 'school'))
+      )
     : [];
 
   return { visibleSpots, visibleSchools };
