@@ -7,6 +7,7 @@ import type { BoatRoute, LngLat, Mode, School, Selection, Spot } from '@/lib/typ
 import { depthColorExpression } from '@/lib/depth';
 import { activityOf } from '@/lib/activities';
 import { applyMapTheme } from '@/lib/mapTheme';
+import { startFish } from '@/lib/fish';
 
 // ---------------------------------------------------------------
 // Basemap switch. If the normal map ever stays plain/white,
@@ -183,6 +184,14 @@ export default function DiveMap({
     const map = mapRef.current;
     if (!map || !ready) return;
     applyMapTheme(map, baseLayers.current, softStyle);
+
+    // swimming fish in the water (only in the adventure look)
+    if (!softStyle) return;
+    const water = baseLayers.current.filter((id) => {
+      const l = map.getLayer(id);
+      return l?.type === 'fill' && /water|ocean|sea|lake/i.test(id) && !/name|label/i.test(id);
+    });
+    return startFish(map, water);
   }, [softStyle, ready]);
 
   // 2) (Re)create the markers whenever the data changes

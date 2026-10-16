@@ -1,32 +1,32 @@
 import type maplibregl from 'maplibre-gl';
 
 // ---------------------------------------------------------------
-// "Soft" map colours (friendly pastel look, like Waze) put on top
+// "Adventure" map colours (warm, friendly, like an explorer map) put on top
 // of the normal basemap. Only layers that are part of the basemap
 // are touched; the original colours are remembered, so switching
 // back to "Classic" restores them exactly.
 // Change the colours here if you want a different mood.
 // ---------------------------------------------------------------
 const C = {
-  land: '#f2eef8', // soft lilac-grey
-  water: '#a8d8f5',
-  waterLine: '#a8d8f5',
-  park: '#cdebc3',
-  wood: '#bfe3b4',
-  sand: '#f6ead0',
-  building: '#e6e1ec',
-  built: '#ece7f2',
-  aero: '#e4e6ef',
-  roadMajor: '#ffd48f',
-  roadMain: '#ffe9b8',
-  road: '#ffffff',
-  casing: '#ddd6e6',
-  path: '#e4dcec',
-  rail: '#d3d1dc',
-  boundary: '#c2b2e3',
-  text: '#5a5f78',
-  textWater: '#3f8ac2',
-  halo: 'rgba(255,255,255,0.92)',
+  land: '#f6eedb', // warm parchment
+  water: '#8fd3e3',
+  waterLine: '#8fd3e3',
+  park: '#cfe5b0',
+  wood: '#b7d796',
+  sand: '#f8e7c0',
+  building: '#eadfc9',
+  built: '#f1e6cf',
+  aero: '#e8e3d6',
+  roadMajor: '#f7b267',
+  roadMain: '#fbd9a0',
+  road: '#fffaf0',
+  casing: '#e3d3b4',
+  path: '#d9b98c',
+  rail: '#cbbfa8',
+  boundary: '#c98f6b',
+  text: '#6b4f3a',
+  textWater: '#2f7f9c',
+  halo: 'rgba(255,248,232,0.95)',
 };
 
 type Saved = Map<string, unknown>;

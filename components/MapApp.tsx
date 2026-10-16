@@ -439,12 +439,12 @@ function MapView() {
           <button
             onClick={toggleStyle}
             aria-pressed={softStyle}
-            title="Soft or classic map colours"
+            title="Adventure look (colours and fish) or classic map"
             className={`rounded-full px-3 py-1 text-xs font-semibold ${
               softStyle ? 'bg-sky-600 text-white' : 'text-gray-800 hover:bg-gray-100'
             }`}
           >
-            Soft
+            🧭 Adventure
           </button>
           <button
             onClick={() => setView3d((v) => !v)}
