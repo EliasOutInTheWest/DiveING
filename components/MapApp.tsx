@@ -51,6 +51,20 @@ function MapView() {
   const [routesVersion, setRoutesVersion] = useState(0);
   const [depthMap, setDepthMap] = useState(false);
   const [view3d, setView3d] = useState(false);
+  const [softStyle, setSoftStyle] = useState(true);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('dv-map-style') === 'classic') setSoftStyle(false);
+    } catch {}
+  }, []);
+  function toggleStyle() {
+    setSoftStyle((v) => {
+      try {
+        localStorage.setItem('dv-map-style', v ? 'classic' : 'soft');
+      } catch {}
+      return !v;
+    });
+  }
   const [ratings, setRatings] = useState<Record<string, RatingInfo>>({});
   const [ratingsVersion, setRatingsVersion] = useState(0);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
@@ -297,6 +311,7 @@ function MapView() {
         mode={mode}
         depthMap={depthMap && showDepthFilter}
         terrain3d={view3d && mode.type === 'idle'}
+        softStyle={softStyle}
         onSelect={setSelected}
         onMapClick={handleMapClick}
         onBackgroundClick={handleBackgroundClick}
@@ -421,6 +436,16 @@ function MapView() {
               Depth
             </button>
           )}
+          <button
+            onClick={toggleStyle}
+            aria-pressed={softStyle}
+            title="Soft or classic map colours"
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              softStyle ? 'bg-sky-600 text-white' : 'text-gray-800 hover:bg-gray-100'
+            }`}
+          >
+            Soft
+          </button>
           <button
             onClick={() => setView3d((v) => !v)}
             aria-pressed={view3d}

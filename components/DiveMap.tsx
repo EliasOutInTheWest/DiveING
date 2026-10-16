@@ -6,6 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import type { BoatRoute, LngLat, Mode, School, Selection, Spot } from '@/lib/types';
 import { depthColorExpression } from '@/lib/depth';
 import { activityOf } from '@/lib/activities';
+import { applyMapTheme } from '@/lib/mapTheme';
 
 // ---------------------------------------------------------------
 // Basemap switch. If the normal map ever stays plain/white,
@@ -55,6 +56,7 @@ type Props = {
   mode: Mode;
   depthMap: boolean;
   terrain3d: boolean;
+  softStyle: boolean; // pastel colours (true) or the classic basemap colours (false)
   onSelect: (s: Selection | null) => void;
   onMapClick: (p: LngLat) => void;
   onBackgroundClick: () => void;
@@ -70,6 +72,7 @@ export default function DiveMap({
   mode,
   depthMap,
   terrain3d,
+  softStyle,
   onSelect,
   onMapClick,
   onBackgroundClick,
@@ -80,6 +83,11 @@ export default function DiveMap({
   const was3d = useRef(false);
   const markerEls = useRef(new Map<string, HTMLElement>());
   const zoomBefore = useRef<number | null>(null);
+  const baseLayers = useRef<string[]>([]);
+  const softRef = useRef(softStyle);
+  useEffect(() => {
+    softRef.current = softStyle;
+  });
 
   // Latest values for listeners that live as long as the map
   const modeRef = useRef(mode);
@@ -108,6 +116,9 @@ export default function DiveMap({
     map.on('error', (e) => console.error('MAP ERROR:', e.error?.message ?? e));
 
     map.on('load', () => {
+      // remember which layers belong to the basemap, then colour them
+      baseLayers.current = map.getStyle().layers.map((l) => l.id);
+      applyMapTheme(map, baseLayers.current, softRef.current);
       // saved boat routes of the selected school / spot
       map.addSource('routes', {
         type: 'geojson',
@@ -166,6 +177,13 @@ export default function DiveMap({
       setReady(false);
     };
   }, []);
+
+  // 1b) switch between soft and classic colours
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    applyMapTheme(map, baseLayers.current, softStyle);
+  }, [softStyle, ready]);
 
   // 2) (Re)create the markers whenever the data changes
   useEffect(() => {
