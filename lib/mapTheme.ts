@@ -1,32 +1,32 @@
 import type maplibregl from 'maplibre-gl';
 
 // ---------------------------------------------------------------
-// "Adventure" map colours (dark ocean night, like the start page) put on top
+// "Adventure" map colours (dark green land, clear blue sea, like the start page) put on top
 // of the normal basemap. Only layers that are part of the basemap
 // are touched; the original colours are remembered, so switching
 // back to "Classic" restores them exactly.
 // Change the colours here if you want a different mood.
 // ---------------------------------------------------------------
 const C = {
-  land: '#10263b', // deep night blue, like the start page
-  water: '#06222f',
-  waterLine: '#0a3a4d',
-  park: '#123d44',
-  wood: '#0e3540',
-  sand: '#1b3447',
-  building: '#183450',
-  built: '#13304a',
-  aero: '#163049',
-  roadMajor: '#d9954f', // warm dawn orange, the one glowing colour
-  roadMain: '#3b7b9c',
-  road: '#27506b',
-  casing: '#0b1c2c',
-  path: '#2c4d66',
-  rail: '#26384a',
-  boundary: '#7c5cc4',
-  text: '#b9d6e3',
-  textWater: '#5fb4d6',
-  halo: 'rgba(5,24,32,0.92)',
+  land: '#153f37', // dark forest green
+  water: '#1b86a8', // clear mid blue, like the sea on the start page
+  waterLine: '#2399bd',
+  park: '#1b5242',
+  wood: '#12463a',
+  sand: '#2d5b50',
+  building: '#1f5247',
+  built: '#184a40',
+  aero: '#1d4a47',
+  roadMajor: '#f4b266', // warm dawn orange, same as the start page sun
+  roadMain: '#5aa592',
+  road: '#33705f',
+  casing: '#0d2b27',
+  path: '#3d7867',
+  rail: '#2c5a50',
+  boundary: '#7fc4a4',
+  text: '#d9efe5',
+  textWater: '#e3f7fd',
+  halo: 'rgba(6,34,36,0.88)',
 };
 
 type Saved = Map<string, unknown>;
