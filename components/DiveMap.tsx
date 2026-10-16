@@ -202,29 +202,22 @@ export default function DiveMap({
 
     const markers: maplibregl.Marker[] = [];
 
-    // teardrop pin with an emoji in it; schools / shops get a small activity badge
-    function pin(color: string, emoji: string, badge?: string): HTMLElement {
-      const el = document.createElement('div');
-      el.className = 'dv-pin';
-      const body = document.createElement('div');
-      body.className = 'dv-pin-body';
-      body.style.setProperty('--c', color);
+    // The normal map pin (as before). An emoji is laid over its round head;
+    // schools / shops also get a small badge with the activity.
+    function add(kind: 'spot' | 'school', id: string, lng: number, lat: number, color: string, emoji: string, badge?: string) {
+      const marker = new maplibregl.Marker({ color }).setLngLat([lng, lat]).addTo(map!);
+      const el = marker.getElement();
       const icon = document.createElement('span');
-      icon.className = 'dv-pin-emoji';
+      icon.className = 'dv-pin-ico';
+      icon.setAttribute('aria-hidden', 'true');
       icon.textContent = emoji;
-      body.appendChild(icon);
-      el.appendChild(body);
+      el.appendChild(icon);
       if (badge) {
         const b = document.createElement('span');
         b.className = 'dv-pin-badge';
         b.textContent = badge;
-        el.appendChild(b);
+        icon.appendChild(b);
       }
-      return el;
-    }
-
-    function add(kind: 'spot' | 'school', id: string, lng: number, lat: number, el: HTMLElement) {
-      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map!);
       el.style.cursor = 'pointer';
       el.style.transition = 'opacity 200ms';
       markerEls.current.set(`${kind}:${id}`, el);
@@ -240,10 +233,10 @@ export default function DiveMap({
     // school / rental / shop pin: orange, emoji of its type, small badge with the activity
     visibleSpots.forEach((s) => {
       const a = activityOf(s.activity);
-      add('spot', s.id, s.lng, s.lat, pin(a.color, a.emoji));
+      add('spot', s.id, s.lng, s.lat, a.color, a.emoji);
     });
     visibleSchools.forEach((s) =>
-      add('school', s.id, s.lng, s.lat, pin('#f97316', providerTypeOf(s.provider_type).emoji, activityOf(s.activity).emoji))
+      add('school', s.id, s.lng, s.lat, '#f97316', providerTypeOf(s.provider_type).emoji, activityOf(s.activity).emoji)
     );
 
     return () => {
@@ -259,8 +252,13 @@ export default function DiveMap({
       const isSelected = k === key;
       el.style.opacity = key && !isSelected ? '0.3' : '1';
       el.style.zIndex = isSelected ? '5' : '';
-      el.style.transformOrigin = '50% 100%';
-      el.style.scale = isSelected ? '1.3' : '';
+      // scale the pin and its emoji together, from the tip
+      const grow = isSelected ? 'scale(1.3)' : '';
+      el.querySelectorAll<HTMLElement>('svg, .dv-pin-ico').forEach((n) => {
+        n.style.transition = 'transform 150ms';
+        n.style.transformOrigin = '50% 100%';
+        n.style.transform = grow;
+      });
     });
   }, [selected, visibleSpots, visibleSchools]);
 
