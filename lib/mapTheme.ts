@@ -1,32 +1,32 @@
 import type maplibregl from 'maplibre-gl';
 
 // ---------------------------------------------------------------
-// "Adventure" map colours (warm, friendly, like an explorer map) put on top
+// "Adventure" map colours (dark ocean night, like the start page) put on top
 // of the normal basemap. Only layers that are part of the basemap
 // are touched; the original colours are remembered, so switching
 // back to "Classic" restores them exactly.
 // Change the colours here if you want a different mood.
 // ---------------------------------------------------------------
 const C = {
-  land: '#f6eedb', // warm parchment
-  water: '#8fd3e3',
-  waterLine: '#8fd3e3',
-  park: '#cfe5b0',
-  wood: '#b7d796',
-  sand: '#f8e7c0',
-  building: '#eadfc9',
-  built: '#f1e6cf',
-  aero: '#e8e3d6',
-  roadMajor: '#f7b267',
-  roadMain: '#fbd9a0',
-  road: '#fffaf0',
-  casing: '#e3d3b4',
-  path: '#d9b98c',
-  rail: '#cbbfa8',
-  boundary: '#c98f6b',
-  text: '#6b4f3a',
-  textWater: '#2f7f9c',
-  halo: 'rgba(255,248,232,0.95)',
+  land: '#10263b', // deep night blue, like the start page
+  water: '#06222f',
+  waterLine: '#0a3a4d',
+  park: '#123d44',
+  wood: '#0e3540',
+  sand: '#1b3447',
+  building: '#183450',
+  built: '#13304a',
+  aero: '#163049',
+  roadMajor: '#d9954f', // warm dawn orange, the one glowing colour
+  roadMain: '#3b7b9c',
+  road: '#27506b',
+  casing: '#0b1c2c',
+  path: '#2c4d66',
+  rail: '#26384a',
+  boundary: '#7c5cc4',
+  text: '#b9d6e3',
+  textWater: '#5fb4d6',
+  halo: 'rgba(5,24,32,0.92)',
 };
 
 type Saved = Map<string, unknown>;
@@ -101,9 +101,9 @@ export function applyMapTheme(map: maplibregl.Map, baseLayerIds: string[], soft:
     const type = layer.type as string;
 
     if (type === 'raster') {
-      set(id, 'raster-saturation', -0.2);
-      set(id, 'raster-contrast', -0.12);
-      set(id, 'raster-brightness-min', 0.08);
+      set(id, 'raster-saturation', -0.35);
+      set(id, 'raster-contrast', 0.15);
+      set(id, 'raster-brightness-max', 0.45);
       continue;
     }
 

@@ -46,7 +46,7 @@ function drawFish(ctx: CanvasRenderingContext2D, f: Fish, x: number, y: number, 
   ctx.globalAlpha = 0.9 * f.fade;
 
   // soft shadow on the water
-  ctx.fillStyle = 'rgba(10, 60, 90, 0.18)';
+  ctx.fillStyle = 'rgba(125, 211, 252, 0.16)';
   ctx.beginPath();
   ctx.ellipse(1, s * 0.35, s * 0.5, s * 0.18, 0, 0, Math.PI * 2);
   ctx.fill();
@@ -60,11 +60,14 @@ function drawFish(ctx: CanvasRenderingContext2D, f: Fish, x: number, y: number, 
   ctx.closePath();
   ctx.fill();
 
-  // body
+  // body (with a soft glow so the fish show up in the dark water)
+  ctx.shadowColor = f.body;
+  ctx.shadowBlur = 10;
   ctx.fillStyle = f.body;
   ctx.beginPath();
   ctx.ellipse(0, 0, s * 0.5, s * 0.26, 0, 0, Math.PI * 2);
   ctx.fill();
+  ctx.shadowBlur = 0;
 
   // stripe + fin + eye
   ctx.fillStyle = f.fin;
@@ -76,7 +79,7 @@ function drawFish(ctx: CanvasRenderingContext2D, f: Fish, x: number, y: number, 
   ctx.lineTo(s * 0.2, -s * 0.2);
   ctx.fill();
   ctx.globalAlpha = f.fade;
-  ctx.fillStyle = '#0b1f33';
+  ctx.fillStyle = '#051820';
   ctx.beginPath();
   ctx.arc(s * 0.3, -s * 0.05, s * 0.045, 0, Math.PI * 2);
   ctx.fill();
@@ -213,7 +216,7 @@ export function startFish(map: maplibregl.Map, waterLayerIds: string[]): () => v
     }
 
     // bubbles drift up and pop
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillStyle = 'rgba(186,230,253,0.6)';
     for (let i = bubbles.length - 1; i >= 0; i--) {
       const b = bubbles[i];
       b.y -= b.v * dt;
