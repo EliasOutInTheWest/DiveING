@@ -286,7 +286,7 @@ function MapView() {
   const canAddSpot = isAdmin || isVerified;
 
   return (
-    <div className="relative h-full w-full">
+    <div className="dv-mapwrap relative h-full w-full">
       <DiveMap
         spots={spots}
         schools={schools}
@@ -304,19 +304,19 @@ function MapView() {
 
       <Link
         href="/"
-        className="absolute bottom-6 left-2.5 z-10 rounded bg-white px-3 py-1.5 text-sm font-medium text-sky-800 shadow hover:bg-gray-50"
+        className="dv-pill absolute bottom-6 left-2.5 z-10"
       >
         ← Home
       </Link>
       <Link
         href="/feed"
-        className="absolute bottom-6 left-24 z-10 rounded bg-white px-3 py-1.5 text-sm font-medium text-sky-800 shadow hover:bg-gray-50"
+        className="dv-pill absolute bottom-6 left-28 z-10"
       >
         ▶ Feed
       </Link>
 
       {/* toolbar: add pins, hints while placing / drawing */}
-      <div className="absolute left-1/2 top-2.5 z-10 flex -translate-x-1/2 items-center gap-2 rounded bg-white p-2 text-sm text-gray-900 shadow">
+      <div className="absolute left-1/2 top-2.5 z-10 flex -translate-x-1/2 items-center gap-2 !rounded-full bg-white p-2 pl-3 text-sm text-gray-900 shadow">
         {mode.type === 'idle' && (
           <>
             {canAddSpot && (
@@ -409,12 +409,12 @@ function MapView() {
             <p className="text-gray-400">Data: GEBCO / ETOPO1 via Mapzen Terrain Tiles.</p>
           </div>
         )}
-        <div className="flex gap-1 rounded bg-white p-1 shadow">
+        <div className="flex gap-1 !rounded-full bg-white p-1 shadow">
           {showDepthFilter && (
             <button
               onClick={() => setDepthMap((v) => !v)}
               aria-pressed={depthMap}
-              className={`rounded px-2.5 py-1 text-xs font-medium ${
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
                 depthMap ? 'bg-sky-600 text-white' : 'text-gray-800 hover:bg-gray-100'
               }`}
             >
@@ -424,7 +424,7 @@ function MapView() {
           <button
             onClick={() => setView3d((v) => !v)}
             aria-pressed={view3d}
-            className={`rounded px-2.5 py-1 text-xs font-medium ${
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
               view3d ? 'bg-sky-600 text-white' : 'text-gray-800 hover:bg-gray-100'
             }`}
           >

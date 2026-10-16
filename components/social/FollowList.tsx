@@ -101,7 +101,7 @@ export default function FollowList({ userId, username, initial, hidden, onClose 
                   {kind === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
                 </p>
               )}
-              <ul className="divide-y divide-gray-100">
+              <ul className="space-y-2">
                 {people.map((p) => (
                   <PersonRow key={p.id} person={p} onNavigate={onClose} />
                 ))}

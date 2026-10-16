@@ -26,7 +26,7 @@ type Props = {
 };
 
 const railButton =
-  'flex h-11 w-11 items-center justify-center rounded-full bg-black/45 text-xl text-white backdrop-blur hover:bg-black/65 disabled:opacity-60';
+  'flex h-11 w-11 items-center justify-center rounded-full dv-rail text-xl text-white disabled:opacity-60';
 
 export default function FeedCard({
   item,
@@ -107,7 +107,7 @@ export default function FeedCard({
   const poster = mediaThumbUrl(item) ?? undefined;
 
   return (
-    <section ref={rootRef} className="relative h-dvh w-full snap-start snap-always overflow-hidden bg-black">
+    <section ref={rootRef} className="relative h-dvh w-full snap-start snap-always overflow-hidden bg-[#051820]">
       {/* ---------- the picture / video ---------- */}
       <div
         className="absolute inset-0 flex items-center justify-center"
@@ -165,7 +165,7 @@ export default function FeedCard({
       )}
 
       {/* shade behind the text */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/75 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 dv-scrim" />
 
       {/* ---------- right side buttons ---------- */}
       <div className="absolute bottom-24 right-3 z-10 flex flex-col items-center gap-3">
@@ -209,14 +209,14 @@ export default function FeedCard({
       <div className="absolute bottom-6 left-4 right-20 z-10 text-white">
         <div className="flex flex-wrap items-center gap-2">
           {item.username ? (
-            <Link href={`/u/${item.username}`} className="font-semibold drop-shadow hover:underline">
+            <Link href={`/u/${item.username}`} className="font-bold drop-shadow hover:underline">
               @{item.username}
             </Link>
           ) : (
             <span className="font-semibold drop-shadow">@unknown</span>
           )}
           {item.cert_level && (
-            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px] backdrop-blur">
+            <span className="dv-chip rounded-full px-2 py-0.5 text-[11px] backdrop-blur">
               {certLabel(item.cert_level)}
             </span>
           )}
@@ -235,7 +235,7 @@ export default function FeedCard({
       {/* ---------- video progress ---------- */}
       {isVideo && (
         <div className="absolute inset-x-0 bottom-0 z-10 h-1 bg-white/25">
-          <div className="h-full bg-white" style={{ width: `${progress * 100}%` }} />
+          <div className="dv-bar h-full" style={{ width: `${progress * 100}%` }} />
         </div>
       )}
     </section>

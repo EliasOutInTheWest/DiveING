@@ -195,25 +195,25 @@ function FeedView() {
 
   const tabClass = (m: FeedMode) =>
     `rounded-full px-3 py-1 text-sm font-medium ${
-      mode === m ? 'bg-white text-gray-900' : 'text-white/80 hover:text-white'
+      mode === m ? 'dv-active' : 'text-white/80 hover:text-white'
     }`;
 
   return (
-    <div className="relative h-dvh w-screen overflow-hidden bg-black">
+    <div className="relative h-dvh w-screen overflow-hidden bg-[#051820]">
       {/* ---------- top bar ---------- */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between p-3">
         <div className="pointer-events-auto flex gap-2 text-sm font-medium">
-          <Link href="/" className="rounded bg-black/45 px-2.5 py-1.5 text-white backdrop-blur hover:bg-black/65">
+          <Link href="/" className="dv-pill">
             ←<span className="hidden sm:inline"> Home</span>
           </Link>
-          <Link href="/map" className="rounded bg-black/45 px-2.5 py-1.5 text-white backdrop-blur hover:bg-black/65">
+          <Link href="/map" className="dv-pill">
             🗺<span className="hidden sm:inline"> Map</span>
           </Link>
-          <button onClick={openPost} className="rounded bg-sky-500 px-2.5 py-1.5 text-white hover:bg-sky-600">
+          <button onClick={openPost} className="rounded-full bg-sky-500 px-4 py-1.5 text-white hover:bg-sky-600">
             + Post
           </button>
         </div>
-        <div className="pointer-events-auto absolute left-1/2 top-14 flex sm:top-3 -translate-x-1/2 gap-1 rounded-full bg-black/45 p-1 backdrop-blur">
+        <div className="pointer-events-auto absolute left-1/2 top-14 flex sm:top-3 -translate-x-1/2 gap-1 rounded-full dv-glass p-1">
           <button onClick={() => setMode('foryou')} className={tabClass('foryou')}>
             For you
           </button>
@@ -254,14 +254,14 @@ function FeedView() {
         ))}
 
         {items.length > 0 && done && (
-          <section className="flex h-dvh snap-start flex-col items-center justify-center bg-slate-900 px-6 text-center text-white">
+          <section className="flex h-dvh snap-start flex-col items-center justify-center bg-[radial-gradient(600px_400px_at_50%_30%,rgba(14,165,233,0.25),transparent)] px-6 text-center text-white">
             <div className="text-5xl">🌊</div>
             <h2 className="mt-3 text-xl font-semibold">You have seen everything for now</h2>
             <p className="mt-1 max-w-sm text-sm text-slate-300">
               Post your own photo or video, or explore more spots on the map.
             </p>
             <div className="mt-5 flex gap-3">
-              <button onClick={openPost} className="rounded-full bg-sky-500 px-5 py-2 font-medium hover:bg-sky-600">
+              <button onClick={openPost} className="rounded-full bg-sky-500 px-6 py-2.5 font-semibold hover:bg-sky-600">
                 + Post
               </button>
               <Link href="/map" className="rounded-full border border-white/50 px-5 py-2 font-medium hover:bg-white/10">
@@ -304,7 +304,7 @@ function FeedView() {
                   Show all activities
                 </button>
               )}
-              <button onClick={openPost} className="mt-4 rounded-full bg-sky-500 px-5 py-2 font-medium hover:bg-sky-600">
+              <button onClick={openPost} className="mt-4 rounded-full bg-sky-500 px-6 py-2.5 font-semibold hover:bg-sky-600">
                 + Post
               </button>
             </>

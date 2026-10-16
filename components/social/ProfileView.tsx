@@ -82,23 +82,23 @@ export default function ProfileView({ username }: { username: string }) {
   const stat = (value: number, label: string, onClick?: () => void) => {
     const inner = (
       <>
-        <span className="block text-lg font-bold leading-tight">{value}</span>
+        <span className="block text-xl font-extrabold leading-tight">{value}</span>
         <span className="text-xs text-gray-500">{label}</span>
       </>
     );
     return onClick ? (
-      <button onClick={onClick} className="rounded-lg px-3 py-1 text-center hover:bg-gray-100">
+      <button onClick={onClick} className="dv-stat rounded-2xl px-5 py-2 text-center">
         {inner}
       </button>
     ) : (
-      <div className="px-3 py-1 text-center">{inner}</div>
+      <div className="dv-stat rounded-2xl px-5 py-2 text-center">{inner}</div>
     );
   };
 
   return (
     <div>
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div className="relative h-28 sm:h-36" style={{ background: banner(acts) }}>
+      <div className="dv-glass dv-pop overflow-hidden rounded-3xl">
+        <div className="dv-banner relative h-32 sm:h-40" style={{ background: banner(acts) }}>
           <div className="absolute inset-0 flex items-center justify-end gap-2 pr-5 text-4xl opacity-25" aria-hidden="true">
             {acts.slice(0, 4).map((a) => (
               <span key={a}>{activityOf(a).emoji}</span>
@@ -108,10 +108,10 @@ export default function ProfileView({ username }: { username: string }) {
 
         <div className="px-4 pb-4 sm:px-6">
           <div className="relative z-10 -mt-10 flex items-end justify-between gap-3">
-            <Avatar name={profile.username} path={profile.avatar_url} size={88} className="ring-4 ring-white" />
+            <Avatar name={profile.username} path={profile.avatar_url} size={88} className="dv-avatar-ring" />
             <div className="pb-1">
               {isMe ? (
-                <Link href="/settings" className="rounded-full border border-gray-300 px-4 py-1.5 text-sm font-semibold hover:bg-gray-50">
+                <Link href="/settings" className="rounded-full border border-gray-300 bg-gray-50 px-5 py-1.5 text-sm font-semibold hover:bg-gray-200">
                   Edit profile
                 </Link>
               ) : (
@@ -120,7 +120,7 @@ export default function ProfileView({ username }: { username: string }) {
             </div>
           </div>
 
-          <h1 className="mt-2 text-xl font-bold leading-tight">{displayName(profile)}</h1>
+          <h1 className="dv-title mt-3 text-2xl leading-tight">{displayName(profile)}</h1>
           <p className="text-sm text-gray-500">
             @{profile.username}
             {profile.follows_me && !isMe && (
@@ -164,20 +164,20 @@ export default function ProfileView({ username }: { username: string }) {
       </div>
 
       {isMe && doneCount < steps.length && (
-        <section className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 p-4" aria-label="Complete your profile">
+        <section className="mt-4 dv-glass dv-rise rounded-3xl p-4" aria-label="Complete your profile">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-sky-900">Complete your profile</h2>
+            <h2 className="text-sm font-bold text-sky-100">Complete your profile</h2>
             <span className="text-xs font-medium text-sky-800">
               {doneCount} of {steps.length}
             </span>
           </div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-sky-100" role="progressbar" aria-valuenow={doneCount} aria-valuemin={0} aria-valuemax={steps.length}>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={doneCount} aria-valuemin={0} aria-valuemax={steps.length}>
             <div className="h-full rounded-full bg-sky-600 transition-all duration-500" style={{ width: `${(doneCount / steps.length) * 100}%` }} />
           </div>
           <ul className="mt-3 space-y-1.5 text-sm">
             {steps.map((s) => (
               <li key={s.text} className="flex items-center gap-2">
-                <span aria-hidden="true" className={s.done ? 'text-green-600' : 'text-gray-400'}>
+                <span aria-hidden="true" className={s.done ? 'text-green-400' : 'text-gray-400'}>
                   {s.done ? '✓' : '○'}
                 </span>
                 {s.done ? (

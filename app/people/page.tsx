@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function PeoplePage() {
   return (
     <SocialShell>
-      <h1 className="mb-4 text-xl font-bold">Find people</h1>
+      <h1 className="dv-title mb-4 text-3xl">Find people</h1>
       <PeopleSearch />
     </SocialShell>
   );

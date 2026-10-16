@@ -242,7 +242,7 @@ export default function SettingsForm() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Settings</h1>
+        <h1 className="dv-title text-2xl">Settings</h1>
         <Link href={`/u/${shownName}`} className="text-sm font-medium text-sky-700 hover:underline">
           View my profile
         </Link>

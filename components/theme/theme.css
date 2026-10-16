@@ -1,0 +1,406 @@
+/* =========================================================
+   DiveING app theme: map, feed, profile, people, settings.
+   Everything is scoped to ".dv" so nothing else on the site changes.
+   It re-colours the existing Tailwind classes to the dark ocean look
+   of the start page, and adds a few "dv-" helper classes.
+   ========================================================= */
+
+.dv {
+  --dv-deep: #051820;
+  --dv-night: #0b1f33;
+  --dv-glass: rgba(8, 26, 41, 0.88);
+  --dv-glass-2: rgba(255, 255, 255, 0.06);
+  --dv-line: rgba(255, 255, 255, 0.13);
+  --dv-foam: #e8f4f1;
+  --dv-dim: rgba(232, 244, 241, 0.68);
+  --dv-faint: rgba(232, 244, 241, 0.46);
+  --dv-accent: #0ea5e9;
+  --dv-accent-2: #14b8a6;
+  --dv-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dv-spring: cubic-bezier(0.3, 1.6, 0.5, 1);
+  font-family: var(--font-lp), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: var(--dv-foam);
+  color-scheme: dark;
+}
+.dv-page {
+  min-height: 100dvh;
+  background: radial-gradient(900px 520px at 90% -5%, rgba(14, 165, 233, 0.2), transparent 70%),
+    radial-gradient(700px 500px at -5% 40%, rgba(147, 51, 234, 0.13), transparent 70%),
+    radial-gradient(800px 500px at 50% 110%, rgba(20, 184, 166, 0.14), transparent 70%), var(--dv-deep);
+  background-attachment: fixed;
+}
+
+/* ---------- surfaces (white -> glass) ---------- */
+.dv .bg-white:not(.dv-keep),
+.dv .bg-white\/90,
+.dv .bg-white\/95 {
+  background: var(--dv-glass);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: inset 0 0 0 1px var(--dv-line), 0 18px 50px -18px rgba(0, 0, 0, 0.6);
+  color: var(--dv-foam);
+}
+.dv .bg-slate-50 {
+  background: transparent;
+}
+.dv .bg-gray-50,
+.dv .bg-gray-100,
+.dv .hover\:bg-gray-50:hover,
+.dv .hover\:bg-gray-100:hover,
+.dv .hover\:bg-white:hover {
+  background: var(--dv-glass-2);
+}
+.dv .bg-gray-200,
+.dv .hover\:bg-gray-200:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.dv .bg-sky-50,
+.dv .bg-sky-100,
+.dv .hover\:bg-sky-50:hover {
+  background: rgba(14, 165, 233, 0.2);
+}
+/* inside a glass surface, nested light boxes stay subtle */
+.dv .bg-white .bg-white:not(.dv-keep) {
+  background: #0d2740;
+  box-shadow: inset 0 0 0 1px var(--dv-line), 0 18px 40px -12px rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* ---------- text ---------- */
+.dv .text-gray-900,
+.dv .text-gray-800,
+.dv .text-slate-900 {
+  color: var(--dv-foam);
+}
+.dv .text-gray-700,
+.dv .text-gray-600,
+.dv .hover\:text-gray-800:hover {
+  color: var(--dv-dim);
+}
+.dv .text-gray-500,
+.dv .text-gray-400 {
+  color: var(--dv-faint);
+}
+.dv .text-sky-700,
+.dv .text-sky-800 {
+  color: #7dd3fc;
+}
+.dv .text-red-600,
+.dv .text-red-500,
+.dv .hover\:text-red-600:hover {
+  color: #fca5a5;
+}
+.dv .text-green-700 {
+  color: #86efac;
+}
+.dv .text-amber-700,
+.dv .text-orange-700 {
+  color: #fcd34d;
+}
+
+/* ---------- lines ---------- */
+.dv .border-gray-100,
+.dv .border-gray-200,
+.dv .border-gray-300 {
+  border-color: var(--dv-line);
+}
+.dv .divide-gray-100 > :not(:last-child),
+.dv .divide-gray-200 > :not(:last-child) {
+  border-color: var(--dv-line);
+}
+.dv .border-sky-600,
+.dv .border-sky-500 {
+  border-color: var(--dv-accent);
+}
+.dv .ring-sky-200 {
+  --tw-ring-color: rgba(14, 165, 233, 0.45);
+}
+
+/* ---------- primary buttons ---------- */
+.dv .bg-sky-600,
+.dv .bg-sky-500 {
+  background: linear-gradient(135deg, #0ea5e9, #0891b2 60%, #0d9488);
+  color: #fff;
+  box-shadow: 0 8px 24px -8px rgba(14, 165, 233, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.dv .hover\:bg-sky-700:hover,
+.dv .hover\:bg-sky-600:hover {
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9 60%, #14b8a6);
+  filter: brightness(1.05);
+}
+.dv .bg-orange-500 {
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+}
+.dv button,
+.dv a {
+  transition: transform 0.25s var(--dv-spring), background-color 0.25s, box-shadow 0.3s, border-color 0.25s,
+    color 0.2s, filter 0.2s;
+}
+.dv button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+.dv button:not(:disabled):active {
+  transform: scale(0.97);
+}
+.dv .dv-active {
+  background: var(--dv-foam);
+  color: var(--dv-deep);
+  box-shadow: 0 6px 20px -6px rgba(255, 255, 255, 0.45);
+}
+
+/* ---------- rounder shapes ---------- */
+.dv .rounded {
+  border-radius: 0.8rem;
+}
+.dv .rounded-lg {
+  border-radius: 1rem;
+}
+.dv .rounded-xl {
+  border-radius: 1.2rem;
+}
+
+/* ---------- form fields ---------- */
+.dv input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+.dv select,
+.dv textarea {
+  background-color: rgba(255, 255, 255, 0.07);
+  color: var(--dv-foam);
+  border-color: var(--dv-line);
+}
+.dv input::placeholder,
+.dv textarea::placeholder {
+  color: var(--dv-faint);
+}
+.dv input:focus,
+.dv select:focus,
+.dv textarea:focus {
+  outline: none;
+  border-color: var(--dv-accent);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3);
+}
+.dv option {
+  background: #0b1f33;
+  color: var(--dv-foam);
+}
+.dv input[type='checkbox'],
+.dv input[type='radio'],
+.dv input[type='range'] {
+  accent-color: var(--dv-accent);
+}
+.dv :focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 2px;
+}
+.dv ::selection {
+  background: rgba(14, 165, 233, 0.45);
+}
+.dv * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+/* ---------- panels slide in ---------- */
+@keyframes dv-slide {
+  from {
+    opacity: 0;
+    translate: -24px 0;
+  }
+}
+@keyframes dv-rise {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+  }
+}
+@keyframes dv-pop {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
+}
+.dv aside.bg-white {
+  animation: dv-slide 0.45s var(--dv-ease) both;
+  border-radius: 0 1.5rem 1.5rem 0;
+}
+@media (max-width: 639px) {
+  .dv aside.bg-white {
+    border-radius: 0;
+  }
+}
+.dv .dv-rise {
+  animation: dv-rise 0.7s var(--dv-ease) both;
+  animation-delay: var(--d, 0ms);
+}
+.dv .dv-pop {
+  animation: dv-pop 0.4s var(--dv-spring) both;
+}
+
+/* ---------- helpers used by the components ---------- */
+.dv .dv-glass {
+  background: var(--dv-glass);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: inset 0 0 0 1px var(--dv-line), 0 18px 50px -18px rgba(0, 0, 0, 0.6);
+  color: var(--dv-foam);
+}
+.dv .dv-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: var(--dv-glass);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 0 0 1px var(--dv-line);
+  color: var(--dv-foam);
+  text-decoration: none;
+}
+.dv .dv-pill:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+.dv .dv-logo {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-size: 1.15rem;
+  background: linear-gradient(90deg, #7dd3fc, #5eead4 50%, #fcd34d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dv .dv-title {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+.dv .dv-hover-lift {
+  transition: transform 0.3s var(--dv-spring), box-shadow 0.3s;
+}
+.dv .dv-hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.4), 0 22px 50px -20px rgba(14, 165, 233, 0.5);
+}
+
+/* ---------- map controls and popups ---------- */
+.dv .maplibregl-ctrl-group {
+  background: var(--dv-glass);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-radius: 1rem;
+  box-shadow: inset 0 0 0 1px var(--dv-line);
+  overflow: hidden;
+}
+.dv .maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--dv-line);
+}
+.dv .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1) hue-rotate(180deg) brightness(1.2);
+}
+.dv .maplibregl-ctrl-attrib {
+  background: rgba(5, 24, 32, 0.7);
+  color: var(--dv-dim);
+  border-radius: 0.6rem 0 0 0;
+}
+.dv .maplibregl-ctrl-attrib a {
+  color: #7dd3fc;
+}
+.dv .maplibregl-popup-content {
+  background: var(--dv-glass);
+  color: var(--dv-foam);
+  border-radius: 1rem;
+  box-shadow: inset 0 0 0 1px var(--dv-line), 0 18px 40px -12px rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.dv .maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+  border-top-color: rgba(8, 26, 41, 0.9);
+}
+.dv .maplibregl-popup-anchor-top .maplibregl-popup-tip {
+  border-bottom-color: rgba(8, 26, 41, 0.9);
+}
+/* a soft dusk tint on the (light) map so the dark panels belong to it */
+.dv .dv-mapwrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(5, 24, 32, 0.32), transparent 22%, transparent 70%, rgba(5, 24, 32, 0.34));
+}
+
+/* ---------- feed ---------- */
+.dv-feed {
+  background: var(--dv-deep);
+}
+.dv-feed .dv-rail {
+  background: rgba(8, 26, 41, 0.55);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+.dv-feed .dv-rail:hover {
+  background: rgba(14, 165, 233, 0.55);
+}
+.dv-feed .dv-scrim {
+  background: linear-gradient(0deg, rgba(5, 24, 32, 0.92), rgba(5, 24, 32, 0.45) 55%, transparent);
+}
+.dv-feed .dv-bar {
+  background: linear-gradient(90deg, #0ea5e9, #14b8a6, #fcd34d);
+}
+.dv-feed .dv-chip {
+  background: rgba(14, 165, 233, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.4);
+}
+
+/* ---------- profile ---------- */
+.dv .dv-banner {
+  position: relative;
+  overflow: hidden;
+}
+.dv .dv-banner::before {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 0deg, rgba(255, 255, 255, 0.22), transparent 25%, rgba(255, 255, 255, 0.12) 50%, transparent 75%, rgba(255, 255, 255, 0.22));
+  animation: dv-spin 24s linear infinite;
+  mix-blend-mode: soft-light;
+}
+@keyframes dv-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+.dv .dv-stat {
+  transition: transform 0.3s var(--dv-spring), background-color 0.3s;
+}
+.dv .dv-stat:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.1);
+}
+.dv .dv-avatar-ring {
+  box-shadow: 0 0 0 4px var(--dv-deep), 0 0 0 6px rgba(125, 211, 252, 0.7), 0 14px 30px -8px rgba(14, 165, 233, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dv *,
+  .dv *::before,
+  .dv *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.dv .text-sky-900,
+.dv .text-sky-100 {
+  color: #bae6fd;
+}
+
+/* panels that sit on top of content stay nearly solid so text never bleeds through */
+.dv aside.bg-white,
+.dv .bg-white\/95 {
+  background: rgba(7, 24, 38, 0.96);
+}

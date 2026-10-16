@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import MapApp from '@/components/MapApp';
+import { font } from '@/components/theme/font';
+import '@/components/theme/theme.css';
 
 export const metadata: Metadata = {
   title: 'Map – DiveING',
@@ -8,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function MapPage() {
   return (
-    <main className="h-screen w-screen">
+    <main className={`dv ${font.variable} h-screen w-screen`}>
       <MapApp />
     </main>
   );

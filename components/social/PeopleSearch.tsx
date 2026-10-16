@@ -77,7 +77,7 @@ export default function PeopleSearch() {
         </p>
       )}
 
-      <ul className="divide-y divide-gray-200">
+      <ul className="space-y-2">
         {people.map((p) => (
           <PersonRow key={p.id} person={p} />
         ))}

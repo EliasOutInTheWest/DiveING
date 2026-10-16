@@ -20,8 +20,8 @@ export default function ActivityChips({ value, onChange, showAll = true, dark = 
 
   const size = compact ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm';
   const idle = dark
-    ? 'border-white/40 bg-black/40 text-white hover:bg-black/60'
-    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50';
+    ? 'border-white/30 bg-black/35 text-white backdrop-blur hover:bg-black/55'
+    : 'border-white/20 bg-white/10 text-white/85 hover:bg-white/20';
 
   return (
     <div className={`flex flex-wrap gap-1.5 ${className ?? ''}`} role="group" aria-label="Activities">
@@ -31,7 +31,7 @@ export default function ActivityChips({ value, onChange, showAll = true, dark = 
           onClick={() => onChange([])}
           aria-pressed={value.length === 0}
           className={`rounded-full border font-medium ${size} ${
-            value.length === 0 ? 'border-slate-800 bg-slate-800 text-white' : idle
+            value.length === 0 ? 'border-white bg-white !text-slate-900 dv-keep' : idle
           }`}
         >
           All

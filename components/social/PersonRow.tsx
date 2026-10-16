@@ -17,7 +17,7 @@ export default function PersonRow({ person, onNavigate }: { person: Person; onNa
     .join(' · ');
 
   return (
-    <li className="flex items-center gap-3 py-3">
+    <li className="dv-glass dv-hover-lift flex items-center gap-3 rounded-2xl px-3 py-3">
       <Link href={`/u/${person.username}`} onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-3">
         <Avatar name={person.username} path={person.avatar_url} size={48} />
         <span className="min-w-0">
