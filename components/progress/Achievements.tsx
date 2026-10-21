@@ -5,7 +5,17 @@ import Medal from '@/components/progress/Medal';
 import { achievementTitle, loadDefs, TIERS, TRACKS, type Def, type Progress } from '@/lib/progress';
 
 // One card per track: the six medals, and the progress to the next one
-export default function Achievements({ progress }: { progress: Progress }) {
+export default function Achievements({
+  progress,
+  isMe = false,
+  onShowcase,
+  error,
+}: {
+  progress: Progress;
+  isMe?: boolean;
+  onShowcase?: (next: string[]) => void;
+  error?: string;
+}) {
   const [defs, setDefs] = useState<Def[] | null>(null);
   useEffect(() => {
     loadDefs().then(setDefs);
@@ -17,12 +27,25 @@ export default function Achievements({ progress }: { progress: Progress }) {
 
   const earned = new Set(progress.achievements.map((a) => a.code));
   const total = defs.length;
+  const picked = progress.showcase ?? [];
+
+  function toggle(code: string) {
+    if (!onShowcase) return;
+    if (picked.includes(code)) onShowcase(picked.filter((c) => c !== code));
+    else if (picked.length < 3) onShowcase([...picked, code]);
+  }
 
   return (
     <div>
-      <p className="mb-3 text-sm text-gray-600">
+      <p className="mb-1 text-sm text-gray-600">
         <b className="text-gray-900">{earned.size}</b> of {total} achievements unlocked
       </p>
+      {isMe && (
+        <p className="mb-3 text-xs text-gray-500">
+          Tap an unlocked medal to show it off next to your name ({picked.length}/3 picked). Tap again to remove it.
+        </p>
+      )}
+      {error && <p className="mb-2 text-xs text-red-600">{error}</p>}
       <div className="grid gap-3 sm:grid-cols-2">
         {TRACKS.map((t, i) => {
           const list = defs.filter((d) => d.track === t.track).sort((a, b) => a.tier - b.tier);
@@ -42,16 +65,37 @@ export default function Achievements({ progress }: { progress: Progress }) {
                 </span>
               </div>
               <div className="mt-3 flex items-center justify-between gap-1">
-                {list.map((d) => (
-                  <Medal
-                    key={d.code}
-                    track={t.track}
-                    tier={d.tier}
-                    earned={earned.has(d.code)}
-                    size={38}
-                    title={`${achievementTitle(t.track, d.tier)}: ${d.threshold.toLocaleString()} ${t.unit}${earned.has(d.code) ? ' (unlocked)' : ''}`}
-                  />
-                ))}
+                {list.map((d) => {
+                  const on = earned.has(d.code);
+                  const pinned = picked.includes(d.code);
+                  const medal = (
+                    <Medal
+                      track={t.track}
+                      tier={d.tier}
+                      earned={on}
+                      size={38}
+                      title={`${achievementTitle(t.track, d.tier)}: ${d.threshold.toLocaleString()} ${t.unit}${on ? ' (unlocked)' : ''}`}
+                    />
+                  );
+                  if (!isMe || !on) return <span key={d.code}>{medal}</span>;
+                  return (
+                    <button
+                      key={d.code}
+                      type="button"
+                      onClick={() => toggle(d.code)}
+                      aria-pressed={pinned}
+                      aria-label={`${pinned ? 'Remove' : 'Show'} ${achievementTitle(t.track, d.tier)} on my profile`}
+                      className={`relative rounded-full ${pinned ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0a2234]' : 'hover:scale-110'}`}
+                    >
+                      {medal}
+                      {pinned && (
+                        <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-white text-[9px] text-slate-900">
+                          📌
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
               <div className="mt-3">
                 {next ? (

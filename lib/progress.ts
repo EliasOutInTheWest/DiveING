@@ -72,6 +72,7 @@ export type Progress = {
   next_level_xp: number;
   counts: Record<string, number>;
   achievements: { code: string; earned_at: string }[];
+  showcase: string[]; // up to 3 codes the owner picked to show off
   old_level?: number; // only after sync_progress
   new_achievements?: string[]; // only after sync_progress
 };

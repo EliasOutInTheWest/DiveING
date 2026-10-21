@@ -14,6 +14,8 @@ import Favourites from '@/components/social/Favourites';
 import LevelBadge from '@/components/progress/LevelBadge';
 import LevelCard from '@/components/progress/LevelCard';
 import Achievements from '@/components/progress/Achievements';
+import Showcase from '@/components/progress/Showcase';
+import { supabase } from '@/lib/supabase';
 import { checkProgress, getProgress, type Progress } from '@/lib/progress';
 
 type Tab = 'posts' | 'achievements' | 'favourites';
@@ -43,6 +45,7 @@ export default function ProfileView({ username }: { username: string }) {
   const [tab, setTab] = useState<Tab>('posts');
   const [list, setList] = useState<'followers' | 'following' | null>(null);
   const [progress, setProgress] = useState<Progress | null>(null);
+  const [showcaseError, setShowcaseError] = useState('');
 
   const uid = user?.id;
   const load = useCallback(async () => {
@@ -73,6 +76,19 @@ export default function ProfileView({ username }: { username: string }) {
       cancelled = true;
     };
   }, [profileId, uid]);
+
+  async function saveShowcase(next: string[]) {
+    if (!progress || !profileId) return;
+    const before = progress.showcase ?? [];
+    setShowcaseError('');
+    setProgress({ ...progress, showcase: next }); // shown at once, then saved
+    const { error } = await supabase.from('profiles').update({ showcase: next }).eq('id', profileId);
+    if (error) {
+      console.error('showcase error:', error.message);
+      setProgress((p) => (p ? { ...p, showcase: before } : p));
+      setShowcaseError(error.message);
+    }
+  }
 
   if (state === 'loading' || authLoading) return <p className="py-16 text-center text-sm text-gray-500">Loading…</p>;
   if (state === 'error')
@@ -142,6 +158,7 @@ export default function ProfileView({ username }: { username: string }) {
           <h1 className="dv-title mt-3 flex flex-wrap items-center gap-2 text-2xl leading-tight">
             {displayName(profile)}
             {progress && <LevelBadge level={progress.level} />}
+            {progress && <Showcase codes={progress.showcase ?? []} size={28} />}
           </h1>
           <p className="text-sm text-gray-500">
             @{profile.username}
@@ -239,7 +256,7 @@ export default function ProfileView({ username }: { username: string }) {
 
       <div className="mt-4">
         {tab === 'achievements' ? (
-          progress ? <Achievements progress={progress} /> : <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
+          progress ? <Achievements progress={progress} isMe={isMe} onShowcase={saveShowcase} error={showcaseError} /> : <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
         ) : tab === 'posts' ? (
           <PostGrid
             userId={profile.id}
