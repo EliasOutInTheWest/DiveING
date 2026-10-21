@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { checkProgress } from '@/lib/progress';
 import { useDirtyFlag } from '@/components/DirtyContext';
 import { certLabel } from '@/lib/certs';
 import type { RatingInfo } from '@/lib/types';
@@ -114,6 +115,7 @@ export default function ReviewsSection({ kind, targetId, info, onChanged }: Prop
       return;
     }
     setShowForm(false);
+    if (!mine) void checkProgress(); // XP + achievements for a new review
     await load();
     onChanged();
   }

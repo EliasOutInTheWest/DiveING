@@ -11,8 +11,12 @@ import FollowButton from '@/components/social/FollowButton';
 import FollowList from '@/components/social/FollowList';
 import PostGrid from '@/components/social/PostGrid';
 import Favourites from '@/components/social/Favourites';
+import LevelBadge from '@/components/progress/LevelBadge';
+import LevelCard from '@/components/progress/LevelCard';
+import Achievements from '@/components/progress/Achievements';
+import { checkProgress, getProgress, type Progress } from '@/lib/progress';
 
-type Tab = 'posts' | 'favourites';
+type Tab = 'posts' | 'achievements' | 'favourites';
 
 function banner(acts: string[]) {
   const colors = acts.slice(0, 3).map((a) => activityOf(a).color);
@@ -38,6 +42,7 @@ export default function ProfileView({ username }: { username: string }) {
   const [state, setState] = useState<'loading' | 'ok' | 'missing' | 'error'>('loading');
   const [tab, setTab] = useState<Tab>('posts');
   const [list, setList] = useState<'followers' | 'following' | null>(null);
+  const [progress, setProgress] = useState<Progress | null>(null);
 
   const uid = user?.id;
   const load = useCallback(async () => {
@@ -54,6 +59,20 @@ export default function ProfileView({ username }: { username: string }) {
     setTab('posts');
     load();
   }, [load, authLoading, uid]);
+
+  // XP + achievements of this profile (on your own profile: also hand out new ones)
+  const profileId = profile?.id;
+  useEffect(() => {
+    if (!profileId) return;
+    let cancelled = false;
+    (async () => {
+      const p = uid === profileId ? ((await checkProgress()) ?? (await getProgress(profileId))) : await getProgress(profileId);
+      if (!cancelled) setProgress(p);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId, uid]);
 
   if (state === 'loading' || authLoading) return <p className="py-16 text-center text-sm text-gray-500">Loading…</p>;
   if (state === 'error')
@@ -120,7 +139,10 @@ export default function ProfileView({ username }: { username: string }) {
             </div>
           </div>
 
-          <h1 className="dv-title mt-3 text-2xl leading-tight">{displayName(profile)}</h1>
+          <h1 className="dv-title mt-3 flex flex-wrap items-center gap-2 text-2xl leading-tight">
+            {displayName(profile)}
+            {progress && <LevelBadge level={progress.level} />}
+          </h1>
           <p className="text-sm text-gray-500">
             @{profile.username}
             {profile.follows_me && !isMe && (
@@ -193,8 +215,14 @@ export default function ProfileView({ username }: { username: string }) {
         </section>
       )}
 
+      {progress && (
+        <div className="mt-4">
+          <LevelCard progress={progress} isMe={isMe} />
+        </div>
+      )}
+
       <div role="tablist" className="mt-5 flex border-b border-gray-200">
-        {(['posts', ...(isMe ? ['favourites'] : [])] as Tab[]).map((t) => (
+        {(['posts', 'achievements', ...(isMe ? ['favourites'] : [])] as Tab[]).map((t) => (
           <button
             key={t}
             role="tab"
@@ -204,13 +232,15 @@ export default function ProfileView({ username }: { username: string }) {
               tab === t ? 'border-sky-600 text-sky-700' : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
-            {t === 'posts' ? 'Posts' : 'Favourites'}
+            {t === 'posts' ? 'Posts' : t === 'achievements' ? '🏆 Achievements' : 'Favourites'}
           </button>
         ))}
       </div>
 
       <div className="mt-4">
-        {tab === 'posts' ? (
+        {tab === 'achievements' ? (
+          progress ? <Achievements progress={progress} /> : <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
+        ) : tab === 'posts' ? (
           <PostGrid
             userId={profile.id}
             isMe={isMe}

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { SCHOOL_COLUMNS, SPOT_COLUMNS, type LngLat, type School, type Spot } from '@/lib/types';
 import { buildPayload, fieldsFor, inputClass, optionLabel, type Kind } from '@/lib/fields';
 import { activityOf } from '@/lib/activities';
+import { checkProgress } from '@/lib/progress';
 import { providerName, providerTypeOf } from '@/lib/providers';
 
 type Props = {
@@ -72,6 +73,7 @@ export default function CreatePanel({ kind, at, isAdmin, defaultActivity, onCanc
       setError(`Could not create it. ${err?.message ?? ''}`);
       return;
     }
+    if (kind === 'spot') void checkProgress(); // XP + achievements for a new spot
     onCreated(kind, data as unknown as Spot | School);
   }
 

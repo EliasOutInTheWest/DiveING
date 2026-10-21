@@ -2,6 +2,7 @@
 // Photos are shrunk in the browser (GPS data removed). Videos are uploaded as they are,
 // plus a poster picture (a frame of the video) so the feed and the grids have a preview.
 
+import { checkProgress } from '@/lib/progress';
 import { supabase } from '@/lib/supabase';
 import { resizeImage } from '@/lib/image';
 import { PHOTO_BUCKET, VIDEO_BUCKET } from '@/lib/photos';
@@ -149,6 +150,7 @@ export async function uploadMedia({ file, spotId, caption, userId }: Args): Prom
       await supabase.storage.from(PHOTO_BUCKET).remove([posterPath]);
       throw new Error(dbErr.message);
     }
+    void checkProgress();
     return;
   }
 
@@ -179,4 +181,5 @@ export async function uploadMedia({ file, spotId, caption, userId }: Args): Prom
     await supabase.storage.from(PHOTO_BUCKET).remove([path, tPath]);
     throw new Error(dbErr.message);
   }
+  void checkProgress();
 }

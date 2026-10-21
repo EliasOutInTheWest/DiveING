@@ -12,6 +12,8 @@ import {
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { cleanActivities, readStoredActivities, storeActivities } from '@/lib/activities';
+import { checkProgress } from '@/lib/progress';
+import ProgressToaster from '@/components/progress/ProgressToaster';
 
 type AuthData = {
   user: User | null;
@@ -108,6 +110,25 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, [load]);
 
+  // hand out achievements earned while away (new followers, likes), at most every 10 minutes
+  useEffect(() => {
+    if (!uid) return;
+    try {
+      const last = Number(window.sessionStorage.getItem('dv-progress-sync') ?? 0);
+      if (Date.now() - last < 10 * 60 * 1000) return;
+      window.sessionStorage.setItem('dv-progress-sync', String(Date.now()));
+    } catch {
+      // no storage: just sync
+    }
+    const t = window.setTimeout(() => void checkProgress(), 2500);
+    return () => window.clearTimeout(t);
+  }, [uid]);
+
   const value = useMemo(() => ({ ...state, refresh, setActivities }), [state, refresh, setActivities]);
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      <ProgressToaster />
+    </AuthContext.Provider>
+  );
 }
