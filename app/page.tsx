@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { ACTIVITIES } from '@/lib/activities';
 import '@/components/landing/landing.css';
 import LandingNav from '@/components/landing/LandingNav';
+import AppNav from '@/components/nav/AppNav';
 import Hero from '@/components/landing/Hero';
 import Worlds from '@/components/landing/Worlds';
 import MapDemo from '@/components/landing/MapDemo';
@@ -85,6 +86,7 @@ export default async function Landing() {
       <ScrollFx />
       <DepthGauge />
       <LandingNav />
+      <AppNav />
 
       <main>
         <Hero />

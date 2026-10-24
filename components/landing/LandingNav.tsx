@@ -27,26 +27,6 @@ export default function LandingNav() {
           </svg>
           DiveING
         </Link>
-        <div className="flex items-center gap-1 text-sm font-medium text-white/90 sm:gap-2">
-          <a href="#worlds" className="hidden rounded-full px-3 py-1.5 hover:bg-white/10 sm:inline">
-            Activities
-          </a>
-          <a href="#map" className="hidden rounded-full px-3 py-1.5 hover:bg-white/10 sm:inline">
-            Map
-          </a>
-          <a href="#feed" className="hidden rounded-full px-3 py-1.5 hover:bg-white/10 md:inline">
-            Feed
-          </a>
-          <a href="#schools" className="hidden rounded-full px-3 py-1.5 hover:bg-white/10 md:inline">
-            For businesses
-          </a>
-          <Link href="/feed" className="rounded-full px-3 py-1.5 hover:bg-white/10 sm:hidden">
-            Feed
-          </Link>
-          <Link href="/map" className="lp-btn-nav rounded-full bg-white px-4 py-1.5 font-semibold text-[#0c2b36]">
-            Open map
-          </Link>
-        </div>
       </nav>
     </header>
   );

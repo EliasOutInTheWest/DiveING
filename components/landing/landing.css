@@ -1262,6 +1262,7 @@
   background: var(--lp-deep);
   padding: 56px 0 0;
   font-size: 0.88rem;
+  padding-bottom: 96px; /* room for the bottom navigation bar */
 }
 .lp-footer-links {
   display: flex;

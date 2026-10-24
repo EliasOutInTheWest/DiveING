@@ -168,7 +168,7 @@ export default function FeedCard({
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 dv-scrim" />
 
       {/* ---------- right side buttons ---------- */}
-      <div className="absolute bottom-24 right-3 z-10 flex flex-col items-center gap-3">
+      <div className="absolute bottom-40 right-3 z-10 flex flex-col items-center gap-3">
         <div className="flex flex-col items-center">
           <button
             onClick={onLike}
@@ -206,7 +206,7 @@ export default function FeedCard({
       </div>
 
       {/* ---------- text at the bottom ---------- */}
-      <div className="absolute bottom-6 left-4 right-20 z-10 text-white">
+      <div className="absolute bottom-28 left-4 right-20 z-10 text-white">
         <div className="flex flex-wrap items-center gap-2">
           {item.username ? (
             <Link href={`/u/${item.username}`} className="font-bold drop-shadow hover:underline">

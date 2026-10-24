@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import type { FeedItem } from '@/lib/types';
 import { removeMediaFiles } from '@/lib/photos';
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
+import AppNav from '@/components/nav/AppNav';
 import { DirtyProvider } from '@/components/DirtyContext';
 import AuthBox from '@/components/AuthBox';
 import FeedCard from '@/components/FeedCard';
@@ -203,12 +204,6 @@ function FeedView() {
       {/* ---------- top bar ---------- */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between p-3">
         <div className="pointer-events-auto flex gap-2 text-sm font-medium">
-          <Link href="/" className="dv-pill">
-            ←<span className="hidden sm:inline"> Home</span>
-          </Link>
-          <Link href="/map" className="dv-pill">
-            🗺<span className="hidden sm:inline"> Map</span>
-          </Link>
           <button onClick={openPost} className="rounded-full bg-sky-500 px-4 py-1.5 text-white hover:bg-sky-600">
             + Post
           </button>
@@ -229,6 +224,7 @@ function FeedView() {
       </div>
 
       <AuthBox className="absolute right-3 top-3 z-20" />
+      <AppNav />
 
       {/* ---------- the posts ---------- */}
       <div ref={scrollerRef} className="h-dvh snap-y snap-mandatory overflow-y-scroll overscroll-contain">

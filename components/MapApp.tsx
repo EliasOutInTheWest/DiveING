@@ -23,6 +23,7 @@ import AdminPanel from '@/components/AdminPanel';
 import FilterPanel from '@/components/FilterPanel';
 import { DEFAULT_FILTERS, activeFilterCount, applyFilters, type Filters } from '@/lib/filters';
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
+import AppNav from '@/components/nav/AppNav';
 import { DirtyProvider, useDirty } from '@/components/DirtyContext';
 import { DEPTH_LEGEND_GRADIENT, DEPTH_STOPS } from '@/lib/depth';
 import ActivityChips from '@/components/ActivityChips';
@@ -317,21 +318,10 @@ function MapView() {
         onBackgroundClick={handleBackgroundClick}
       />
 
-      <Link
-        href="/"
-        className="dv-pill absolute bottom-6 left-2.5 z-10"
-      >
-        ← Home
-      </Link>
-      <Link
-        href="/feed"
-        className="dv-pill absolute bottom-6 left-28 z-10"
-      >
-        ▶ Feed
-      </Link>
+      <AppNav />
 
       {/* toolbar: add pins, hints while placing / drawing */}
-      <div className="absolute left-1/2 top-2.5 z-10 flex -translate-x-1/2 items-center gap-2 !rounded-full bg-white p-2 pl-3 text-sm text-gray-900 shadow">
+      <div className="absolute left-1/2 top-14 sm:top-2.5 z-10 flex -translate-x-1/2 items-center gap-2 !rounded-full bg-white p-2 pl-3 text-sm text-gray-900 shadow">
         {mode.type === 'idle' && (
           <>
             {canAddSpot && (
@@ -398,13 +388,13 @@ function MapView() {
 
       {/* favourite activities: only these are shown on the map (and in the feed) */}
       {mode.type === 'idle' && (
-        <div className="absolute left-1/2 top-16 z-[9] w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-full bg-white/90 px-2 py-1.5 shadow backdrop-blur sm:top-[4.25rem]">
+        <div className="absolute left-1/2 top-[6.75rem] z-[9] w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-full bg-white/90 px-2 py-1.5 shadow backdrop-blur sm:top-[4.25rem]">
           <ActivityChips value={activities} onChange={setActivities} compact />
         </div>
       )}
 
       {/* depth map controls + legend */}
-      <div className="absolute bottom-10 right-2.5 z-10 flex flex-col items-end gap-2">
+      <div className="absolute bottom-24 right-2.5 z-10 flex flex-col items-end gap-2 sm:bottom-10">
         {depthMap && showDepthFilter && (
           <div className="w-56 rounded bg-white/95 p-2 text-[11px] leading-snug text-gray-700 shadow">
             <div className="mb-1 font-medium text-gray-900">Depth (m)</div>

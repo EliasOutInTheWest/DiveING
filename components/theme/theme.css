@@ -473,3 +473,84 @@
 .dv .dv-xpbar {
   transition: width 1s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
+
+/* ---------- main navigation bar (bottom centre, same on every page) ---------- */
+.dv-dock {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  translate: -50% 0;
+  z-index: 15; /* above the map, below side panels, pop-ups and dialogs */
+  display: flex;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(7, 24, 38, 0.82);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 18px 44px -12px rgba(0, 0, 0, 0.65);
+  animation: dv-rise 0.7s var(--dv-ease, ease) both;
+  font-family: var(--font-lp), ui-sans-serif, system-ui, sans-serif;
+}
+.dv-dock-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 58px;
+  padding: 7px 10px 6px;
+  border-radius: 999px;
+  color: rgba(232, 244, 241, 0.7);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  line-height: 1.1;
+  transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1), background-color 0.25s, color 0.2s;
+}
+.dv-dock-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+.dv-dock-on,
+.dv-dock-on:hover {
+  color: #04202b;
+  background: linear-gradient(135deg, #7dd3fc, #5eead4);
+  box-shadow: 0 8px 22px -8px rgba(94, 234, 212, 0.9);
+}
+.dv-dock-me {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.dv-dock-on .dv-dock-me {
+  background: rgba(4, 32, 43, 0.15);
+}
+@media (min-width: 640px) {
+  .dv-dock-item {
+    flex-direction: row;
+    gap: 7px;
+    min-width: 0;
+    padding: 9px 16px;
+    font-size: 13px;
+  }
+}
+
+/* map: keep the attribution above the bottom bar on phones */
+@media (max-width: 640px) {
+  .dv .maplibregl-ctrl-bottom-right,
+  .dv .maplibregl-ctrl-bottom-left {
+    bottom: 84px;
+  }
+}
+/* side panels: scroll room at the bottom */
+.dv aside.bg-white {
+  padding-bottom: 6.5rem;
+}

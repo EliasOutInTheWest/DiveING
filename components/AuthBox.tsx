@@ -113,9 +113,6 @@ export default function AuthBox({ onOpenAdmin, className }: Props) {
           >
             {username ?? user.email}
           </Link>
-          <Link href="/people" title="Find people" className="rounded border border-gray-300 px-2 py-0.5 hover:bg-gray-50">
-            People
-          </Link>
           <Link href="/settings" title="Profile settings" aria-label="Settings" className="rounded border border-gray-300 px-2 py-0.5 hover:bg-gray-50">
             ⚙
           </Link>
