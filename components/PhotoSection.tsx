@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import PlusPrompt from '@/components/billing/PlusPrompt';
 import { useDirtyFlag } from '@/components/DirtyContext';
 import { mediaThumbUrl, mediaUrl, removeMediaFiles, formatDuration } from '@/lib/photos';
 import { ACCEPT_MEDIA, MAX_VIDEO_SECONDS, isVideoFile, uploadMedia } from '@/lib/upload';
@@ -22,8 +23,8 @@ type Row = {
 type Photo = Omit<Row, 'profiles'> & { username: string | null };
 
 export default function PhotoSection({ spotId }: { spotId: string }) {
-  const { user, isAdmin, isVerified } = useAuth();
-  const canUpload = isVerified || isAdmin;
+  const { user, isAdmin, isVerified, canPostMedia } = useAuth();
+  const canUpload = (isVerified && canPostMedia) || isAdmin; // photos and videos need DiveING Plus
   const uid = user?.id;
 
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -245,9 +246,13 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
           </label>
         )
       ) : (
-        <p className="mt-2 text-xs text-gray-400">
-          {user ? 'Please confirm your email to add photos or videos.' : 'Log in to add photos or videos.'}
-        </p>
+        user && isVerified ? (
+          <PlusPrompt variant="inline" />
+        ) : (
+          <p className="mt-2 text-xs text-gray-400">
+            {user ? 'Please confirm your email to add photos or videos.' : 'Log in to add photos or videos.'}
+          </p>
+        )
       )}
 
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}

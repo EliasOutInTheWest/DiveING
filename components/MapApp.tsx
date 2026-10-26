@@ -16,11 +16,12 @@ import {
   type Spot,
 } from '@/lib/types';
 import DiveMap from '@/components/DiveMap';
+import dynamic from 'next/dynamic';
 import SidePanel from '@/components/SidePanel';
-import CreatePanel from '@/components/CreatePanel';
+const CreatePanel = dynamic(() => import('@/components/CreatePanel'), { ssr: false });
 import AuthBox from '@/components/AuthBox';
-import AdminPanel from '@/components/AdminPanel';
-import FilterPanel from '@/components/FilterPanel';
+const AdminPanel = dynamic(() => import('@/components/AdminPanel'), { ssr: false });
+const FilterPanel = dynamic(() => import('@/components/FilterPanel'), { ssr: false });
 import { DEFAULT_FILTERS, activeFilterCount, applyFilters, type Filters } from '@/lib/filters';
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
 import AppNav from '@/components/nav/AppNav';

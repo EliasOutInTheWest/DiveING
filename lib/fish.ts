@@ -34,6 +34,7 @@ const COLOURS: [string, string][] = [
 ];
 
 const MAX_FISH = 16;
+const MAX_FISH_SMALL = 7;
 const MIN_ZOOM = 4.5;
 
 function drawFish(ctx: CanvasRenderingContext2D, f: Fish, x: number, y: number, t: number) {
@@ -105,7 +106,9 @@ export function startFish(map: maplibregl.Map, waterLayerIds: string[]): () => v
 
   let w = 0;
   let h = 0;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const small = window.innerWidth < 700;
+  const maxFish = small ? MAX_FISH_SMALL : MAX_FISH;
+  const dpr = Math.min(window.devicePixelRatio || 1, small ? 1 : 1.5);
   function resize() {
     const r = map.getContainer().getBoundingClientRect();
     w = r.width;
@@ -158,6 +161,8 @@ export function startFish(map: maplibregl.Map, waterLayerIds: string[]): () => v
 
   function tick(now: number) {
     raf = requestAnimationFrame(tick);
+    if (document.hidden) { last = now; return; }
+    if (small && (now - last) < 30) return; // ~30fps on phones
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
     frame++;
@@ -172,7 +177,7 @@ export function startFish(map: maplibregl.Map, waterLayerIds: string[]): () => v
     }
 
     spawnTimer -= dt;
-    if (fish.length < MAX_FISH && spawnTimer <= 0 && !map.isMoving()) {
+    if (fish.length < maxFish && spawnTimer <= 0 && !map.isMoving()) {
       const f = spawn();
       if (f) fish.push(f);
       spawnTimer = 0.25;

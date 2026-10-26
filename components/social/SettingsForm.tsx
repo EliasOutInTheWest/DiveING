@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { CERT_AGENCIES, CERT_LEVELS } from '@/lib/certs';
+import { fmtDate, PLAN } from '@/lib/billing';
 import { removeAvatar, uploadAvatar } from '@/lib/avatar';
 import ActivityChips from '@/components/ActivityChips';
 import Avatar from '@/components/social/Avatar';
@@ -68,7 +69,7 @@ const Toggle = ({ checked, onChange, title, text }: { checked: boolean; onChange
 );
 
 export default function SettingsForm() {
-  const { user, username: savedUsername, loading: authLoading, refresh, activities, setActivities } = useAuth();
+  const { user, username: savedUsername, loading: authLoading, refresh, activities, setActivities, access, isAdmin } = useAuth();
   const uid = user?.id;
 
   const [loading, setLoading] = useState(true);
@@ -247,6 +248,27 @@ export default function SettingsForm() {
           View my profile
         </Link>
       </div>
+
+      <Section title={PLAN.name}>
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+          <p className="text-gray-600">
+            {isAdmin
+              ? 'Admin: everything is included.'
+              : access.status === 'trialing'
+                ? `Free trial until ${fmtDate(access.trial_end)}.`
+                : access.can_post_media
+                  ? access.cancel_at_period_end
+                    ? `Ends on ${fmtDate(access.current_period_end)}.`
+                    : `Active. Next payment ${fmtDate(access.current_period_end)}.`
+                  : access.purge_at
+                    ? `Ended. Photos and videos are deleted on ${fmtDate(access.purge_at)}.`
+                    : `Post photos and videos. ${PLAN.trialDays} days free, then ${PLAN.price} per month.`}
+          </p>
+          <Link href="/subscribe" className="rounded-full border border-gray-300 bg-gray-50 px-4 py-1.5 font-semibold hover:bg-gray-200">
+            {access.can_post_media && !isAdmin ? 'Manage' : 'See plan'}
+          </Link>
+        </div>
+      </Section>
 
       <Section title="Profile picture">
         <div className="flex items-center gap-4">

@@ -13,6 +13,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { cleanActivities, readStoredActivities, storeActivities } from '@/lib/activities';
 import { checkProgress } from '@/lib/progress';
+import { NO_ACCESS, type Access } from '@/lib/billing';
 import ProgressToaster from '@/components/progress/ProgressToaster';
 
 type AuthData = {
@@ -22,6 +23,8 @@ type AuthData = {
   isVerified: boolean; // email confirmed
   schoolIds: string[]; // schools this user is staff of
   activities: string[]; // favourite activities, empty = show everything
+  access: Access; // plan: free account, Plus (trial / paid) or admin
+  canPostMedia: boolean; // may post photos and videos (Plus or admin)
   loading: boolean;
 };
 
@@ -37,6 +40,8 @@ const initial: AuthData = {
   isVerified: false,
   schoolIds: [],
   activities: [],
+  access: NO_ACCESS,
+  canPostMedia: false,
   loading: true,
 };
 
@@ -53,11 +58,13 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       setState({ ...initial, activities: readStoredActivities(), loading: false });
       return;
     }
-    const [profileRes, adminRes, memberRes] = await Promise.all([
+    const [profileRes, adminRes, memberRes, accessRes] = await Promise.all([
       supabase.from('profiles').select('username,activities').eq('id', user.id).maybeSingle(),
       supabase.rpc('is_admin'),
       supabase.from('school_members').select('school_id').eq('user_id', user.id),
+      supabase.rpc('my_access'), // needs subscription.sql
     ]);
+    const access: Access = accessRes.error || !accessRes.data ? { ...NO_ACCESS, registered: true } : (accessRes.data as Access);
     // if the database update (activities.sql) was not run yet, still load the username
     let profile = profileRes.data as { username: string; activities?: unknown } | null;
     if (profileRes.error) {
@@ -71,6 +78,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       isVerified: !!user.email_confirmed_at,
       schoolIds: ((memberRes.data as { school_id: string }[] | null) ?? []).map((r) => r.school_id),
       activities: cleanActivities(profile?.activities),
+      access,
+      canPostMedia: adminRes.data === true || access.can_post_media === true,
       loading: false,
     });
   }, []);

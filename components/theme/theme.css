@@ -554,3 +554,9 @@
 .dv aside.bg-white {
   padding-bottom: 6.5rem;
 }
+
+/* performance: lighter blur on phones, skip off-screen rendering */
+@media (max-width: 640px) {
+  .dv .dv-glass, .dv .dv-pill, .dv aside.bg-white { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+}
+@media (prefers-reduced-motion: reduce) { .dv * { animation-duration: .01ms !important; } }

@@ -8,6 +8,7 @@ import type { FeedItem } from '@/lib/types';
 import { removeMediaFiles } from '@/lib/photos';
 import AuthProvider, { useAuth } from '@/components/AuthProvider';
 import AppNav from '@/components/nav/AppNav';
+import PlusPrompt from '@/components/billing/PlusPrompt';
 import { DirtyProvider } from '@/components/DirtyContext';
 import AuthBox from '@/components/AuthBox';
 import FeedCard from '@/components/FeedCard';
@@ -29,7 +30,7 @@ export default function FeedApp() {
 
 function FeedView() {
   const router = useRouter();
-  const { user, isAdmin, isVerified, loading: authLoading, activities, setActivities } = useAuth();
+  const { user, isAdmin, isVerified, canPostMedia, loading: authLoading, activities, setActivities } = useAuth();
   const activitiesKey = activities.join(',');
   const uid = user?.id;
 
@@ -41,6 +42,7 @@ function FeedView() {
   const [error, setError] = useState('');
   const [muted, setMuted] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [plusOpen, setPlusOpen] = useState(false);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef<FeedItem[]>([]);
@@ -189,6 +191,8 @@ function FeedView() {
       window.alert('Please log in to post (top right).');
     } else if (!isVerified) {
       window.alert('Please confirm your email address first.');
+    } else if (!canPostMedia) {
+      setPlusOpen(true); // photos and videos need DiveING Plus
     } else {
       setUploadOpen(true);
     }
@@ -307,6 +311,8 @@ function FeedView() {
           )}
         </div>
       )}
+
+      {plusOpen && <PlusPrompt variant="modal" onClose={() => setPlusOpen(false)} />}
 
       {uploadOpen && (
         <UploadPanel
