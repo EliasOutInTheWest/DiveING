@@ -4,7 +4,7 @@ import SocialShell from '@/components/social/SocialShell';
 
 export const metadata: Metadata = {
   title: 'DiveING Plus',
-  description: 'Post photos and videos. 14 days free, then $1.99 per month.',
+  description: 'Unlimited photos and videos, feed boost, golden frame and logbook. 14 days free, then $1.99 per month.',
 };
 
 type Props = { searchParams: Promise<{ checkout?: string }> };

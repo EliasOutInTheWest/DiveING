@@ -69,7 +69,7 @@ const Toggle = ({ checked, onChange, title, text }: { checked: boolean; onChange
 );
 
 export default function SettingsForm() {
-  const { user, username: savedUsername, loading: authLoading, refresh, activities, setActivities, access, isAdmin } = useAuth();
+  const { user, username: savedUsername, loading: authLoading, refresh, activities, setActivities, access, isAdmin, isPlus } = useAuth();
   const uid = user?.id;
 
   const [loading, setLoading] = useState(true);
@@ -262,7 +262,7 @@ export default function SettingsForm() {
                     : `Active. Next payment ${fmtDate(access.current_period_end)}.`
                   : access.purge_at
                     ? `Ended. Photos and videos are deleted on ${fmtDate(access.purge_at)}.`
-                    : `Post photos and videos. ${PLAN.trialDays} days free, then ${PLAN.price} per month.`}
+                    : `Unlimited photos and videos, golden frame, logbook and more. ${PLAN.trialDays} days free, then ${PLAN.price} per month.`}
           </p>
           <Link href="/subscribe" className="rounded-full border border-gray-300 bg-gray-50 px-4 py-1.5 font-semibold hover:bg-gray-200">
             {access.can_post_media && !isAdmin ? 'Manage' : 'See plan'}
@@ -272,7 +272,7 @@ export default function SettingsForm() {
 
       <Section title="Profile picture">
         <div className="flex items-center gap-4">
-          <Avatar name={form.username || 'U'} path={avatar} size={80} />
+          <Avatar name={form.username || 'U'} path={avatar} size={80} plus={isPlus} />
           <div className="space-y-2">
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" id="avatar-file" onChange={(e) => pickAvatar(e.target.files?.[0])} />
             <div className="flex gap-2">

@@ -15,6 +15,7 @@ import LevelBadge from '@/components/progress/LevelBadge';
 import LevelCard from '@/components/progress/LevelCard';
 import Achievements from '@/components/progress/Achievements';
 import Showcase from '@/components/progress/Showcase';
+import PlusBadge from '@/components/progress/PlusBadge';
 import { supabase } from '@/lib/supabase';
 import { checkProgress, getProgress, type Progress } from '@/lib/progress';
 
@@ -143,12 +144,17 @@ export default function ProfileView({ username }: { username: string }) {
 
         <div className="px-4 pb-4 sm:px-6">
           <div className="relative z-10 -mt-10 flex items-end justify-between gap-3">
-            <Avatar name={profile.username} path={profile.avatar_url} size={88} className="dv-avatar-ring" />
-            <div className="pb-1">
+            <Avatar name={profile.username} path={profile.avatar_url} size={88} className="dv-avatar-ring" plus={profile.is_plus} />
+            <div className="flex items-center gap-2 pb-1">
               {isMe ? (
-                <Link href="/settings" className="rounded-full border border-gray-300 bg-gray-50 px-5 py-1.5 text-sm font-semibold hover:bg-gray-200">
-                  Edit profile
-                </Link>
+                <>
+                  <Link href="/logbook" className="rounded-full border border-gray-300 bg-gray-50 px-4 py-1.5 text-sm font-semibold hover:bg-gray-200">
+                    📓 Logbook
+                  </Link>
+                  <Link href="/settings" className="rounded-full border border-gray-300 bg-gray-50 px-4 py-1.5 text-sm font-semibold hover:bg-gray-200">
+                    Edit profile
+                  </Link>
+                </>
               ) : (
                 <FollowButton targetId={profile.id} following={profile.is_following} onChange={setFollowing} />
               )}
@@ -157,8 +163,9 @@ export default function ProfileView({ username }: { username: string }) {
 
           <h1 className="dv-title mt-3 flex flex-wrap items-center gap-2 text-2xl leading-tight">
             {displayName(profile)}
+            {profile.is_plus && <PlusBadge />}
             {progress && <LevelBadge level={progress.level} />}
-            {progress && <Showcase codes={progress.showcase ?? []} size={28} />}
+            {progress && <Showcase codes={progress.showcase ?? []} size={28} plus={profile.is_plus} />}
           </h1>
           <p className="text-sm text-gray-500">
             @{profile.username}

@@ -6,7 +6,31 @@ export const PLAN = {
   period: 'month',
   trialDays: 14,
   purgeDays: 30,
+  freeUploads: 10, // photos + videos per month without Plus
+  freeVideo: { mb: 50, seconds: 60 },
+  plusVideo: { mb: 200, seconds: 180 },
+  freeMedals: 3,
+  plusMedals: 6,
+  xpBoost: 25, // percent
 };
+
+// What is left of the monthly upload limit (from the database function media_quota)
+export type Quota = {
+  limit: number;
+  used: number;
+  remaining: number | null; // null = unlimited (Plus / admin)
+  unlimited: boolean;
+  resets_at?: string;
+};
+
+export async function fetchQuota(): Promise<Quota | null> {
+  const { data, error } = await supabase.rpc('media_quota'); // needs plus.sql
+  if (error || !data) return null;
+  return data as Quota;
+}
+
+// the video limits for a plan
+export const videoLimits = (plus: boolean) => (plus ? PLAN.plusVideo : PLAN.freeVideo);
 
 export type Access = {
   registered: boolean;

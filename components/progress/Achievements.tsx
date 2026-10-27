@@ -28,11 +28,12 @@ export default function Achievements({
   const earned = new Set(progress.achievements.map((a) => a.code));
   const total = defs.length;
   const picked = progress.showcase ?? [];
+  const slots = progress.showcase_slots ?? 3;
 
   function toggle(code: string) {
     if (!onShowcase) return;
     if (picked.includes(code)) onShowcase(picked.filter((c) => c !== code));
-    else if (picked.length < 3) onShowcase([...picked, code]);
+    else if (picked.length < slots) onShowcase([...picked, code]);
   }
 
   return (
@@ -42,7 +43,7 @@ export default function Achievements({
       </p>
       {isMe && (
         <p className="mb-3 text-xs text-gray-500">
-          Tap an unlocked medal to show it off next to your name ({picked.length}/3 picked). Tap again to remove it.
+          Tap an unlocked medal to show it off next to your name ({picked.length}/{slots} picked). Tap again to remove it.{slots < 6 ? ' DiveING Plus has 6 slots.' : ''}
         </p>
       )}
       {error && <p className="mb-2 text-xs text-red-600">{error}</p>}

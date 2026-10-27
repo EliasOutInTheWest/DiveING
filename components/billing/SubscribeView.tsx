@@ -4,15 +4,20 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { fmtDate, openPortal, PLAN, startCheckout } from '@/lib/billing';
 
-const ROWS: { label: string; free: boolean | string; plus: boolean | string; visitor: boolean | string }[] = [
+const ROWS: { label: string; free: boolean | string | number; plus: boolean | string | number; visitor: boolean | string | number }[] = [
   { label: 'Look at the map and the feed', visitor: true, free: true, plus: true },
-  { label: 'Add spots', visitor: false, free: true, plus: true },
-  { label: 'Write reviews', visitor: false, free: true, plus: true },
+  { label: 'Add spots and write reviews', visitor: false, free: true, plus: true },
   { label: 'Follow people, earn XP and achievements', visitor: false, free: true, plus: true },
-  { label: 'Post photos and videos', visitor: false, free: false, plus: true },
+  { label: 'Photos and videos', visitor: false, free: `${PLAN.freeUploads} per month`, plus: 'Unlimited' },
+  { label: 'Video length and size', visitor: false, free: `${PLAN.freeVideo.seconds} s, ${PLAN.freeVideo.mb} MB`, plus: `${PLAN.plusVideo.seconds} s, ${PLAN.plusVideo.mb} MB` },
+  { label: 'Boost for your posts in the feed', visitor: false, free: false, plus: true },
+  { label: 'XP boost', visitor: false, free: false, plus: `+${PLAN.xpBoost}%` },
+  { label: 'Medals shown on your profile', visitor: false, free: PLAN.freeMedals, plus: PLAN.plusMedals },
+  { label: 'Golden, animated profile frame and Plus badge', visitor: false, free: false, plus: true },
+  { label: 'Your own logbook with stats and export', visitor: false, free: false, plus: true },
 ];
 
-const mark = (v: boolean | string) => (v === true ? '✓' : v === false ? '–' : v);
+const mark = (v: boolean | string | number) => (v === true ? '✓' : v === false ? '–' : String(v));
 
 export default function SubscribeView({ checkout }: { checkout?: string }) {
   const { user, isVerified, isAdmin, access, loading, refresh } = useAuth();
@@ -81,11 +86,11 @@ export default function SubscribeView({ checkout }: { checkout?: string }) {
   return (
     <div>
       <h1 className="dv-title text-3xl">{PLAN.name}</h1>
-      <p className="mt-1 text-gray-600">Share your photos and videos with the community.</p>
+      <p className="mt-1 text-gray-600">Unlimited photos and videos, a boost in the feed, a golden frame and your own logbook.</p>
 
       {checkout === 'success' && (
         <p className="dv-pop mt-4 rounded-2xl bg-emerald-500/15 px-4 py-3 text-sm text-emerald-700">
-          {access.can_post_media ? '🎉 Welcome to DiveING Plus! You can post photos and videos now.' : 'Thank you! We are activating your plan, this takes a few seconds…'}
+          {access.can_post_media ? '🎉 Welcome to DiveING Plus! Unlimited uploads, your golden frame and the logbook are ready.' : 'Thank you! We are activating your plan, this takes a few seconds…'}
         </p>
       )}
       {checkout === 'cancelled' && (
@@ -121,7 +126,7 @@ export default function SubscribeView({ checkout }: { checkout?: string }) {
             </div>
             {access.cancel_at_period_end && (
               <p className="sm:col-span-2 rounded-xl bg-amber-500/15 px-3 py-2 text-xs text-amber-700">
-                Your subscription is cancelled and ends on {fmtDate(access.current_period_end)}. Photos and videos you posted are deleted 30 days after that, unless you subscribe again.
+                Your subscription is cancelled and ends on {fmtDate(access.current_period_end)}. Photos and videos you posted with Plus are deleted 30 days after that, unless you subscribe again. Uploads within the free limit stay.
               </p>
             )}
           </dl>
@@ -129,7 +134,7 @@ export default function SubscribeView({ checkout }: { checkout?: string }) {
 
         {ended && (
           <p className="mt-4 rounded-xl bg-amber-500/15 px-3 py-2 text-sm text-amber-700">
-            Your subscription ended. Your photos and videos will be deleted on <b>{fmtDate(access.purge_at)}</b>. Subscribe again before that day to keep everything.
+            Your subscription ended. Photos and videos you posted with Plus will be deleted on <b>{fmtDate(access.purge_at)}</b>. Subscribe again before that day to keep everything. Your logbook is never deleted.
           </p>
         )}
       </section>
@@ -159,7 +164,7 @@ export default function SubscribeView({ checkout }: { checkout?: string }) {
 
       <ul className="mt-4 space-y-1.5 px-1 text-xs text-gray-500">
         <li>• {canTrial ? `You are not charged during the ${PLAN.trialDays}-day trial. After it, ${PLAN.price} per month.` : `${PLAN.price} per month.`} Cancel any time in “Manage subscription”.</li>
-        <li>• If your subscription ends, your photos and videos are deleted after {PLAN.purgeDays} days. Spots and reviews are never deleted.</li>
+        <li>• If your subscription ends, the photos and videos you posted with Plus are deleted after {PLAN.purgeDays} days. Posts within the free {PLAN.freeUploads} per month, spots, reviews and your logbook entries are never deleted.</li>
         <li>• Payments are handled by Stripe. We never see your card number.</li>
       </ul>
     </div>

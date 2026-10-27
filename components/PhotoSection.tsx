@@ -6,7 +6,8 @@ import { useAuth } from '@/components/AuthProvider';
 import PlusPrompt from '@/components/billing/PlusPrompt';
 import { useDirtyFlag } from '@/components/DirtyContext';
 import { mediaThumbUrl, mediaUrl, removeMediaFiles, formatDuration } from '@/lib/photos';
-import { ACCEPT_MEDIA, MAX_VIDEO_SECONDS, isVideoFile, uploadMedia } from '@/lib/upload';
+import QuotaNote from '@/components/billing/QuotaNote';
+import { ACCEPT_MEDIA, isVideoFile, uploadMedia, videoCaps } from '@/lib/upload';
 
 type Row = {
   id: string;
@@ -23,8 +24,9 @@ type Row = {
 type Photo = Omit<Row, 'profiles'> & { username: string | null };
 
 export default function PhotoSection({ spotId }: { spotId: string }) {
-  const { user, isAdmin, isVerified, canPostMedia } = useAuth();
-  const canUpload = (isVerified && canPostMedia) || isAdmin; // photos and videos need DiveING Plus
+  const { user, isAdmin, isVerified, canPostMedia, isPlus } = useAuth();
+  const canUpload = (isVerified && canPostMedia) || isAdmin; // free: 10 uploads a month, DiveING Plus: unlimited
+  const caps = videoCaps(isPlus);
   const uid = user?.id;
 
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -117,7 +119,7 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
     setUploading(true);
     setError('');
     try {
-      await uploadMedia({ file, spotId, caption, userId: user.id });
+      await uploadMedia({ file, spotId, caption, userId: user.id, plus: isPlus });
 
       setFile(null);
       setCaption('');
@@ -210,7 +212,7 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
             />
             <p className="text-xs text-gray-500">
               {isVideoFile(file)
-                ? `Only upload videos you made yourself (max. ${MAX_VIDEO_SECONDS} seconds, 50 MB). Videos are uploaded as they are, so check that they do not show a location you want to keep private.`
+                ? `Only upload videos you made yourself (max. ${caps.seconds} seconds, ${caps.mb} MB). Videos are uploaded as they are, so check that they do not show a location you want to keep private.`
                 : 'Only upload photos you took yourself. The photo is shrunk in your browser and hidden data such as the GPS position is removed.'}
             </p>
             <div className="flex gap-2">
@@ -231,7 +233,9 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
             </div>
           </div>
         ) : (
-          <label className="mt-3 inline-block cursor-pointer rounded border border-sky-600 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50">
+          <>
+          <QuotaNote className="mt-3" />
+          <label className="mt-2 inline-block cursor-pointer rounded border border-sky-600 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50">
             + Add photo or video
             <input
               type="file"
@@ -244,6 +248,7 @@ export default function PhotoSection({ spotId }: { spotId: string }) {
               }}
             />
           </label>
+          </>
         )
       ) : (
         user && isVerified ? (

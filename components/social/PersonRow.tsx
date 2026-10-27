@@ -7,6 +7,7 @@ import { certLabel } from '@/lib/certs';
 import { displayName, type Person } from '@/lib/people';
 import Avatar from '@/components/social/Avatar';
 import FollowButton from '@/components/social/FollowButton';
+import PlusBadge from '@/components/progress/PlusBadge';
 
 // One row in a list of people: picture, name, short info, follow button
 export default function PersonRow({ person, onNavigate }: { person: Person; onNavigate?: () => void }) {
@@ -19,10 +20,11 @@ export default function PersonRow({ person, onNavigate }: { person: Person; onNa
   return (
     <li className="dv-glass dv-hover-lift flex items-center gap-3 rounded-2xl px-3 py-3">
       <Link href={`/u/${person.username}`} onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-3">
-        <Avatar name={person.username} path={person.avatar_url} size={48} />
+        <Avatar name={person.username} path={person.avatar_url} size={48} plus={person.is_plus} />
         <span className="min-w-0">
           <span className="flex items-center gap-1.5">
             <span className="truncate font-semibold text-gray-900">{displayName(person)}</span>
+            {person.is_plus && <PlusBadge className="shrink-0" />}
             {person.follows_me && (
               <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600">
                 Follows you

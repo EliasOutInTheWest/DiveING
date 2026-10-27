@@ -13,7 +13,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { cleanActivities, readStoredActivities, storeActivities } from '@/lib/activities';
 import { checkProgress } from '@/lib/progress';
-import { NO_ACCESS, type Access } from '@/lib/billing';
+import { NO_ACCESS, fetchQuota, type Access, type Quota } from '@/lib/billing';
 import ProgressToaster from '@/components/progress/ProgressToaster';
 
 type AuthData = {
@@ -24,7 +24,9 @@ type AuthData = {
   schoolIds: string[]; // schools this user is staff of
   activities: string[]; // favourite activities, empty = show everything
   access: Access; // plan: free account, Plus (trial / paid) or admin
-  canPostMedia: boolean; // may post photos and videos (Plus or admin)
+  isPlus: boolean; // DiveING Plus (trial or paid) or admin
+  quota: Quota | null; // monthly upload limit of free accounts
+  canPostMedia: boolean; // may post a photo or video right now (Plus, admin, or uploads left this month)
   loading: boolean;
 };
 
@@ -41,6 +43,8 @@ const initial: AuthData = {
   schoolIds: [],
   activities: [],
   access: NO_ACCESS,
+  isPlus: false,
+  quota: null,
   canPostMedia: false,
   loading: true,
 };
@@ -58,11 +62,12 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       setState({ ...initial, activities: readStoredActivities(), loading: false });
       return;
     }
-    const [profileRes, adminRes, memberRes, accessRes] = await Promise.all([
+    const [profileRes, adminRes, memberRes, accessRes, quota] = await Promise.all([
       supabase.from('profiles').select('username,activities').eq('id', user.id).maybeSingle(),
       supabase.rpc('is_admin'),
       supabase.from('school_members').select('school_id').eq('user_id', user.id),
       supabase.rpc('my_access'), // needs subscription.sql
+      fetchQuota(), // needs plus.sql
     ]);
     const access: Access = accessRes.error || !accessRes.data ? { ...NO_ACCESS, registered: true } : (accessRes.data as Access);
     // if the database update (activities.sql) was not run yet, still load the username
@@ -71,15 +76,19 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       const { data } = await supabase.from('profiles').select('username').eq('id', user.id).maybeSingle();
       profile = data as { username: string } | null;
     }
+    const isAdmin = adminRes.data === true;
+    const isPlus = isAdmin || access.can_post_media === true;
     setState({
       user,
       username: profile?.username ?? null,
-      isAdmin: adminRes.data === true,
+      isAdmin,
       isVerified: !!user.email_confirmed_at,
       schoolIds: ((memberRes.data as { school_id: string }[] | null) ?? []).map((r) => r.school_id),
       activities: cleanActivities(profile?.activities),
       access,
-      canPostMedia: adminRes.data === true || access.can_post_media === true,
+      isPlus,
+      quota,
+      canPostMedia: isPlus || (quota ? (quota.remaining ?? 0) > 0 : false),
       loading: false,
     });
   }, []);
@@ -89,6 +98,18 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = await supabase.auth.getSession();
     await load(data.session?.user ?? null);
   }, [load]);
+
+  // after an upload: look at the monthly limit again
+  useEffect(() => {
+    const onQuota = () => {
+      fetchQuota().then((quota) => {
+        if (!quota) return;
+        setState((prev) => ({ ...prev, quota, canPostMedia: prev.isPlus || (quota.remaining ?? 0) > 0 }));
+      });
+    };
+    window.addEventListener('dv-quota', onQuota);
+    return () => window.removeEventListener('dv-quota', onQuota);
+  }, []);
 
   // choose favourite activities: shown at once, then saved
   const uid = state.user?.id;

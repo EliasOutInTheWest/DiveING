@@ -33,9 +33,12 @@ export default function LevelCard({ progress, isMe }: { progress: Progress; isMe
           </div>
           <div className="text-sm text-gray-600">
             <b className="text-gray-900">{progress.xp.toLocaleString()}</b> XP total
+            {progress.plus && (progress.plus_boost_xp ?? 0) > 0 && (
+              <span className="ml-2 text-xs font-semibold text-amber-500">✦ +{progress.plus_boost_xp!.toLocaleString()} from Plus</span>
+            )}
           </div>
           <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-            <div className="dv-xpbar h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${r.color}, #fff)` }} />
+            <div className={`dv-xpbar h-full rounded-full ${progress.plus ? 'dv-xpbar-plus' : ''}`} style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${r.color}, #fff)` }} />
           </div>
           <div className="mt-1 flex justify-between text-xs text-gray-500">
             <span>
@@ -59,7 +62,10 @@ export default function LevelCard({ progress, isMe }: { progress: Progress; isMe
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs text-gray-500">Every achievement you unlock gives a bonus on top.</p>
+          <p className="mt-2 text-xs text-gray-500">
+            Every achievement you unlock gives a bonus on top.{' '}
+            {progress.plus ? '✦ DiveING Plus: +25% XP on everything above.' : 'DiveING Plus members earn +25% XP.'}
+          </p>
         </details>
       )}
     </section>

@@ -72,7 +72,10 @@ export type Progress = {
   next_level_xp: number;
   counts: Record<string, number>;
   achievements: { code: string; earned_at: string }[];
-  showcase: string[]; // up to 3 codes the owner picked to show off
+  showcase: string[]; // codes the owner picked to show off (3, or 6 with Plus)
+  plus?: boolean; // DiveING Plus member
+  plus_boost_xp?: number; // XP that comes from the Plus boost
+  showcase_slots?: number; // 3, or 6 with Plus
   old_level?: number; // only after sync_progress
   new_achievements?: string[]; // only after sync_progress
 };

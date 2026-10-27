@@ -560,3 +560,74 @@
   .dv .dv-glass, .dv .dv-pill, .dv aside.bg-white { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 }
 @media (prefers-reduced-motion: reduce) { .dv * { animation-duration: .01ms !important; } }
+
+/* ===== DiveING Plus: gold frame, badge and small animated touches ===== */
+.dv .dv-gold { isolation: isolate; }
+.dv .dv-gold > * { box-shadow: 0 0 0 2px var(--dv-deep, #06121c) !important; }
+.dv .dv-gold::before {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--ring, 3px) - 2px);
+  border-radius: 50%;
+  z-index: -1;
+  background: conic-gradient(#fff3b0, #f5b800, #b87400, #ffe27a, #f5b800, #8a5a00, #fff3b0);
+  box-shadow: 0 0 16px rgba(245, 184, 0, 0.45);
+  animation: dv-gold-spin 6s linear infinite;
+}
+.dv .dv-gold::after {
+  content: '✦';
+  position: absolute;
+  right: -3px;
+  top: -5px;
+  font-size: max(10px, calc(var(--ring, 3px) * 3.2));
+  line-height: 1;
+  color: #ffe27a;
+  text-shadow: 0 0 6px rgba(255, 214, 90, 0.9);
+  animation: dv-twinkle 2.6s ease-in-out infinite;
+}
+@keyframes dv-gold-spin { to { transform: rotate(360deg); } }
+@keyframes dv-twinkle { 0%, 100% { opacity: 0.35; transform: scale(0.7) rotate(0deg); } 50% { opacity: 1; transform: scale(1.15) rotate(25deg); } }
+
+.dv .dv-plus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #3b2600;
+  background: linear-gradient(100deg, #ffd95a 0%, #fff4b8 40%, #f2b200 60%, #ffd95a 100%);
+  background-size: 220% 100%;
+  animation: dv-shine 3.6s linear infinite;
+  vertical-align: middle;
+}
+@keyframes dv-shine { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+/* a glint that sweeps over the medals of Plus members */
+.dv .dv-glint { position: relative; display: inline-flex; overflow: hidden; border-radius: 999px; }
+.dv .dv-glint::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: dv-glint 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes dv-glint { 0%, 55% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
+
+.dv .dv-xpbar-plus { position: relative; overflow: hidden; }
+.dv .dv-xpbar-plus::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 244, 184, 0.7), transparent);
+  transform: translateX(-100%);
+  animation: dv-glint 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dv .dv-gold::before, .dv .dv-gold::after, .dv .dv-plus-badge, .dv .dv-glint::after, .dv .dv-xpbar-plus::after { animation: none !important; }
+}

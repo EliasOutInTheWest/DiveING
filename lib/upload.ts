@@ -8,8 +8,15 @@ import { resizeImage } from '@/lib/image';
 import { PHOTO_BUCKET, VIDEO_BUCKET } from '@/lib/photos';
 
 export const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
-export const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
-export const MAX_VIDEO_SECONDS = 60;
+export const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // free accounts
+export const MAX_VIDEO_SECONDS = 60; // free accounts
+export const MAX_VIDEO_BYTES_PLUS = 200 * 1024 * 1024;
+export const MAX_VIDEO_SECONDS_PLUS = 180;
+
+export const videoCaps = (plus: boolean) =>
+  plus
+    ? { bytes: MAX_VIDEO_BYTES_PLUS, seconds: MAX_VIDEO_SECONDS_PLUS, mb: 200 }
+    : { bytes: MAX_VIDEO_BYTES, seconds: MAX_VIDEO_SECONDS, mb: 50 };
 
 export const ACCEPT_MEDIA = 'image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm';
 
@@ -69,7 +76,7 @@ function waitFor(el: HTMLVideoElement, ok: string, ms: number): Promise<void> {
 }
 
 // Reads the length of the video and takes a picture of an early frame
-async function probeVideo(file: File): Promise<{ duration: number; poster: Blob }> {
+async function probeVideo(file: File, maxSeconds: number): Promise<{ duration: number; poster: Blob }> {
   const url = URL.createObjectURL(file);
   const video = document.createElement('video');
   video.muted = true;
@@ -80,8 +87,10 @@ async function probeVideo(file: File): Promise<{ duration: number; poster: Blob 
     await waitFor(video, 'loadedmetadata', 15000);
     const duration = video.duration;
     if (!Number.isFinite(duration) || duration <= 0) throw new Error(CODEC_HELP);
-    if (duration > MAX_VIDEO_SECONDS + 0.5) {
-      throw new Error(`This video is too long (max. ${MAX_VIDEO_SECONDS} seconds).`);
+    if (duration > maxSeconds + 0.5) {
+      throw new Error(
+        `This video is too long (max. ${maxSeconds} seconds${maxSeconds <= MAX_VIDEO_SECONDS ? ', DiveING Plus allows ' + MAX_VIDEO_SECONDS_PLUS : ''}).`
+      );
     }
 
     video.currentTime = Math.min(0.5, duration / 2);
@@ -107,9 +116,13 @@ async function probeVideo(file: File): Promise<{ duration: number; poster: Blob 
   }
 }
 
-type Args = { file: File; spotId: string; caption: string; userId: string };
+// tells the page to look at the monthly limit again
+const announceUpload = () => window.dispatchEvent(new Event('dv-quota'));
 
-export async function uploadMedia({ file, spotId, caption, userId }: Args): Promise<void> {
+type Args = { file: File; spotId: string; caption: string; userId: string; plus?: boolean };
+
+export async function uploadMedia({ file, spotId, caption, userId, plus = false }: Args): Promise<void> {
+  const caps = videoCaps(plus);
   const cleanCaption = caption.trim() || null;
   const id = crypto.randomUUID();
 
@@ -117,9 +130,11 @@ export async function uploadMedia({ file, spotId, caption, userId }: Args): Prom
   if (isVideoFile(file)) {
     const kind = videoKind(file);
     if (!kind) throw new Error('Please use an MP4, MOV or WebM video.');
-    if (file.size > MAX_VIDEO_BYTES) throw new Error('This video is too large (max. 50 MB).');
+    if (file.size > caps.bytes) {
+      throw new Error(`This video is too large (max. ${caps.mb} MB${plus ? '' : ', DiveING Plus allows 200 MB'}).`);
+    }
 
-    const { duration, poster } = await probeVideo(file);
+    const { duration, poster } = await probeVideo(file, caps.seconds);
 
     const videoPath = `${userId}/${id}.${kind.ext}`;
     const posterPath = `${userId}/${id}_p.jpg`;
@@ -150,6 +165,7 @@ export async function uploadMedia({ file, spotId, caption, userId }: Args): Prom
       await supabase.storage.from(PHOTO_BUCKET).remove([posterPath]);
       throw new Error(dbErr.message);
     }
+    announceUpload();
     void checkProgress();
     return;
   }
@@ -181,5 +197,6 @@ export async function uploadMedia({ file, spotId, caption, userId }: Args): Prom
     await supabase.storage.from(PHOTO_BUCKET).remove([path, tPath]);
     throw new Error(dbErr.message);
   }
+  announceUpload();
   void checkProgress();
 }

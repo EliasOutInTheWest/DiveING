@@ -8,7 +8,7 @@ import { fmtDate, PLAN, startCheckout } from '@/lib/billing';
 // "Posting photos and videos needs DiveING Plus" with the button to start the free trial.
 // variant "modal" = pop-up over the page, "inline" = small box inside a panel.
 export default function PlusPrompt({ variant = 'inline', onClose }: { variant?: 'modal' | 'inline'; onClose?: () => void }) {
-  const { user, isVerified, access } = useAuth();
+  const { user, isVerified, access, quota } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,16 +28,19 @@ export default function PlusPrompt({ variant = 'inline', onClose }: { variant?: 
 
   const body = (
     <div className="text-sm">
-      <div className="dv-title text-lg">📸 Photos and videos are part of {PLAN.name}</div>
+      <div className="dv-title text-lg">
+        {user && isVerified ? `✨ You used your ${quota?.limit ?? PLAN.freeUploads} free uploads this month` : `📸 Post photos and videos`}
+      </div>
       <p className="mt-1 text-gray-600">
-        {canTrial
-          ? `${PLAN.trialDays} days free, then ${PLAN.price} per month. Cancel any time.`
-          : `${PLAN.price} per month. Cancel any time.`}{' '}
-        Spots and reviews stay free with your account.
+        {PLAN.name} gives you unlimited photos and videos, videos up to {PLAN.plusVideo.seconds} seconds, a boost in the feed, +{PLAN.xpBoost}% XP, {PLAN.plusMedals} medal slots, a golden profile frame and your own logbook.{' '}
+        {canTrial ? `${PLAN.trialDays} days free, then ${PLAN.price} per month.` : `${PLAN.price} per month.`} Cancel any time.
       </p>
+      {quota?.resets_at && (
+        <p className="mt-1 text-xs text-gray-500">Or wait: you get {quota.limit} new free uploads on {fmtDate(quota.resets_at)}.</p>
+      )}
       {ended && access.purge_at && (
         <p className="mt-2 rounded-lg bg-amber-500/15 px-3 py-2 text-xs text-amber-700">
-          Your subscription ended. Your photos and videos will be deleted on <b>{fmtDate(access.purge_at)}</b> unless you subscribe again.
+          Your subscription ended. The photos and videos you posted with {PLAN.name} will be deleted on <b>{fmtDate(access.purge_at)}</b> unless you subscribe again.
         </p>
       )}
 

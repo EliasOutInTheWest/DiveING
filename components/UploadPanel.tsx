@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchAll } from '@/lib/fetchAll';
 import { useAuth } from '@/components/AuthProvider';
 import { useDirtyFlag } from '@/components/DirtyContext';
-import { ACCEPT_MEDIA, MAX_VIDEO_SECONDS, isVideoFile, uploadMedia } from '@/lib/upload';
+import QuotaNote from '@/components/billing/QuotaNote';
+import { ACCEPT_MEDIA, isVideoFile, uploadMedia, videoCaps } from '@/lib/upload';
 import { countryName } from '@/lib/countries';
 import { activityOf } from '@/lib/activities';
 
@@ -17,7 +18,8 @@ type Props = {
 
 // "Post" window of the feed: choose the dive spot, a photo or video and a caption
 export default function UploadPanel({ onClose, onUploaded }: Props) {
-  const { user } = useAuth();
+  const { user, isPlus } = useAuth();
+  const caps = videoCaps(isPlus);
   const [spots, setSpots] = useState<SpotOption[]>([]);
   const [search, setSearch] = useState('');
   const [spotId, setSpotId] = useState('');
@@ -65,7 +67,7 @@ export default function UploadPanel({ onClose, onUploaded }: Props) {
     setBusy(true);
     setError('');
     try {
-      await uploadMedia({ file, spotId, caption, userId: user.id });
+      await uploadMedia({ file, spotId, caption, userId: user.id, plus: isPlus });
       onUploaded();
       onClose();
     } catch (e) {
@@ -156,11 +158,12 @@ export default function UploadPanel({ onClose, onUploaded }: Props) {
               </div>
             </div>
           ) : (
+            <>
             <label className="mt-1 flex cursor-pointer flex-col items-center justify-center rounded border-2 border-dashed border-gray-300 px-3 py-6 text-center text-gray-600 hover:border-sky-400 hover:bg-sky-50">
               <span className="text-2xl">📷 🎬</span>
               <span className="mt-1 font-medium">Choose a photo or video</span>
               <span className="mt-0.5 text-xs text-gray-500">
-                Photos: JPG, PNG, WebP. Videos: MP4, MOV or WebM, max. {MAX_VIDEO_SECONDS} seconds and 50 MB.
+                Photos: JPG, PNG, WebP. Videos: MP4, MOV or WebM, max. {caps.seconds} seconds and {caps.mb} MB{isPlus ? '' : ' (DiveING Plus: 180 seconds, 200 MB)'}.
               </span>
               <input
                 type="file"
@@ -173,6 +176,8 @@ export default function UploadPanel({ onClose, onUploaded }: Props) {
                 }}
               />
             </label>
+            <QuotaNote className="mt-2" />
+            </>
           )}
         </div>
 

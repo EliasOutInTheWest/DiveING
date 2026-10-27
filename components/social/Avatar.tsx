@@ -8,10 +8,10 @@ function tone(name: string) {
   return TONES[h % TONES.length];
 }
 
-type Props = { name: string; path?: string | null; size?: number; className?: string };
+type Props = { name: string; path?: string | null; size?: number; className?: string; plus?: boolean };
 
 // Profile picture, or a coloured circle with the first letter
-export default function Avatar({ name, path, size = 40, className = '' }: Props) {
+function Avatar({ name, path, size = 40, className = '' }: Omit<Props, 'plus'>) {
   const src = avatarSrc(path);
   const style = { width: size, height: size, fontSize: size * 0.42 };
   if (src) {
@@ -35,6 +35,21 @@ export default function Avatar({ name, path, size = 40, className = '' }: Props)
       className={`flex shrink-0 select-none items-center justify-center rounded-full font-semibold text-white ${className}`}
     >
       {name.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
+// DiveING Plus members get a golden, softly shimmering frame
+export default function AvatarWithFrame({ plus, ...rest }: Props) {
+  if (!plus) return <Avatar {...rest} />;
+  const ring = Math.max(2, Math.round((rest.size ?? 40) / 20));
+  return (
+    <span
+      className="dv-gold relative inline-flex shrink-0 rounded-full"
+      style={{ ['--ring' as string]: `${ring}px` }}
+      title="DiveING Plus"
+    >
+      <Avatar {...rest} />
     </span>
   );
 }
